@@ -343,7 +343,8 @@ public class CamundaMigrator {
   }
 
   private void migrateFlowNodes() {
-    HistoricActivityInstanceQueryImpl legacyFlowNodeQuery = (HistoricActivityInstanceQueryImpl) historyService.createHistoricActivityInstanceQuery().orderByHistoricActivityInstanceId().asc();
+    HistoricActivityInstanceQueryImpl legacyFlowNodeQuery = (HistoricActivityInstanceQueryImpl) historyService.createHistoricActivityInstanceQuery()
+                                                             .orderByHistoricActivityInstanceStartTime().asc();
 
     String latestLegacyId = flowNodeMapper.findLatestId();
     if (latestLegacyId != null) {
