@@ -167,9 +167,6 @@ public class RuntimeMigrator {
       ActivityInstance activityInstanceTree = runtimeService.getActivityInstance(legacyId);
       Map<String, ActInstance> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
 
-      // TODO: remove experiment. We won't support multi-instance at all it in the MVP.
-      removeMultiInstances(activityInstanceMap);
-
     for (String activityInstanceId : activityInstanceMap.keySet()) {
       ActInstance actInstance = activityInstanceMap.get(activityInstanceId);
       String activityId = actInstance.id().split("#multiInstanceBody")[0];
@@ -192,22 +189,6 @@ public class RuntimeMigrator {
     modifyInstructions.send().join();
     // no need to complete the job since the modification canceled the migrator job in the start event
     });
-  }
-
-  /**
-   * This removes multi-instances from the active activity instance map and only keeps the #multiInstanceBody activity.
-   * Like this, the C8 process model takes care of instantiating X instances.
-   * TODO: how would this work for multi-instance call activities?
-   */
-  protected void removeMultiInstances(Map<String, ActInstance> activityInstanceMap) {
-    Set<String> multiInstanceBodies = activityInstanceMap.values()
-        .stream()
-        .map(ActInstance::id)
-        .filter(activityId -> activityId.endsWith("#multiInstanceBody"))
-        .map(activityId -> activityId.substring(0, activityId.length() - "#multiInstanceBody".length()))
-        .collect(Collectors.toSet());
-
-    activityInstanceMap.entrySet().removeIf(entry -> multiInstanceBodies.contains(entry.getValue().id()));
   }
 
   public Map<String, ActInstance> getActiveActivityIdsById(ActivityInstance activityInstance, Map<String, ActInstance> activeActivities) {
