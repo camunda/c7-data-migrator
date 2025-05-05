@@ -10,7 +10,11 @@
 <mapper namespace="io.camunda.migrator.history.IdKeyMapper">
 
   <select id="findProcessInstanceIds">
-    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = 'runtimeProcessInstance' AND `KEY` IS NULL
+    SELECT ID
+    FROM ${prefix}MIGRATION_MAPPING
+    WHERE TYPE = 'runtimeProcessInstance' AND `KEY` IS NULL
+    LIMIT #{limit}
+    OFFSET #{offset}
   </select>
 
   <update id="updateKeyById" parameterType="io.camunda.migrator.history.IdKeyDbModel">
