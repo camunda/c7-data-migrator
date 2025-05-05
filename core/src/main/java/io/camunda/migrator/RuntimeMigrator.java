@@ -51,6 +51,7 @@ public class RuntimeMigrator {
   @Autowired
   private IdKeyMapper idKeyMapper;
 
+
   // TODO: make it configurable from the application.yml
   // TODO: Spring Boot Starter that makes configuring the client reusable? https://github.com/camunda/camunda/tree/main/clients/spring-boot-starter-camunda-sdk
   protected CamundaClient camundaClient = CamundaClient.newClientBuilder().usePlaintext().build();
@@ -88,37 +89,48 @@ public class RuntimeMigrator {
       });
     }
 
-    // TODO: paginate this
-    idKeyMapper.findProcessInstanceIds().forEach(legacyProcessInstanceId -> {
-      Map<String, Object> globalVariables = new HashMap<>();
+    int limit = 100; // Number of process instances per iteration
+    int offset = 0;  // Starting index
+    List<String> processInstanceIds;
 
-      runtimeService.createVariableInstanceQuery()
-          .activityInstanceIdIn(legacyProcessInstanceId)
-          .list()
-          .forEach(variable -> globalVariables.put(variable.getName(), variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
+    do {
+      processInstanceIds = idKeyMapper.findProcessInstanceIds(limit, offset);
+      processInstanceIds.forEach(legacyProcessInstanceId -> {
+        prepareDataAndCreateC8ProcessInstance(legacyProcessInstanceId);
+      });
+      offset += limit; // Move to the next page
+    } while (!processInstanceIds.isEmpty());
+  }
 
-      globalVariables.put("legacyId", legacyProcessInstanceId);
+  private void prepareDataAndCreateC8ProcessInstance(String legacyProcessInstanceId) {
+    Map<String, Object> globalVariables = new HashMap<>();
 
-      String bpmnProcessId = runtimeService.createProcessInstanceQuery()
-          .processInstanceId(legacyProcessInstanceId)
-          .singleResult()
-          .getProcessDefinitionKey();
+    runtimeService.createVariableInstanceQuery()
+        .activityInstanceIdIn(legacyProcessInstanceId)
+        .list()
+        .forEach(variable -> globalVariables.put(variable.getName(), variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
 
-      long processInstanceKey = camundaClient.newCreateInstanceCommand()
-          .bpmnProcessId(bpmnProcessId)
-          .latestVersion()
-          .variables(globalVariables) // process instance global variables
-          .send()
-          .join()
-          .getProcessInstanceKey();
+    globalVariables.put("legacyId", legacyProcessInstanceId);
 
-      var keyIdDbModel = new IdKeyDbModel();
-      keyIdDbModel.setId(legacyProcessInstanceId);
-      keyIdDbModel.setKey(processInstanceKey);
-      idKeyMapper.updateKeyById(keyIdDbModel);
+    String bpmnProcessId = runtimeService.createProcessInstanceQuery()
+        .processInstanceId(legacyProcessInstanceId)
+        .singleResult()
+        .getProcessDefinitionKey();
 
-      activateMigratorJobsAndModifyInstances();
-    });
+    long processInstanceKey = camundaClient.newCreateInstanceCommand()
+        .bpmnProcessId(bpmnProcessId)
+        .latestVersion()
+        .variables(globalVariables) // process instance global variables
+        .send()
+        .join()
+        .getProcessInstanceKey();
+
+    var keyIdDbModel = new IdKeyDbModel();
+    keyIdDbModel.setId(legacyProcessInstanceId);
+    keyIdDbModel.setKey(processInstanceKey);
+    idKeyMapper.updateKeyById(keyIdDbModel);
+
+    activateMigratorJobsAndModifyInstances();
   }
 
   private void activateMigratorJobsAndModifyInstances() {
@@ -156,6 +168,9 @@ public class RuntimeMigrator {
       ActivityInstance activityInstanceTree = runtimeService.getActivityInstance(legacyId);
       Map<String, ActInstance> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
 
+      // TODO: remove experiment. We won't support multi-instance at all it in the MVP.
+      removeMultiInstances(activityInstanceMap);
+
     for (String activityInstanceId : activityInstanceMap.keySet()) {
       ActInstance actInstance = activityInstanceMap.get(activityInstanceId);
       String activityId = actInstance.id().split("#multiInstanceBody")[0];
@@ -178,6 +193,22 @@ public class RuntimeMigrator {
     modifyInstructions.send().join();
     // no need to complete the job since the modification canceled the migrator job in the start event
     });
+  }
+
+  /**
+   * This removes multi-instances from the active activity instance map and only keeps the #multiInstanceBody activity.
+   * Like this, the C8 process model takes care of instantiating X instances.
+   * TODO: how would this work for multi-instance call activities?
+   */
+  protected void removeMultiInstances(Map<String, ActInstance> activityInstanceMap) {
+    Set<String> multiInstanceBodies = activityInstanceMap.values()
+        .stream()
+        .map(ActInstance::id)
+        .filter(activityId -> activityId.endsWith("#multiInstanceBody"))
+        .map(activityId -> activityId.substring(0, activityId.length() - "#multiInstanceBody".length()))
+        .collect(Collectors.toSet());
+
+    activityInstanceMap.entrySet().removeIf(entry -> multiInstanceBodies.contains(entry.getValue().id()));
   }
 
   public Map<String, ActInstance> getActiveActivityIdsById(ActivityInstance activityInstance, Map<String, ActInstance> activeActivities) {

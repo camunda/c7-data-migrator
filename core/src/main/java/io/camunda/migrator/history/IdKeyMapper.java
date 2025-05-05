@@ -10,7 +10,7 @@ public interface IdKeyMapper {
 
   void insert(IdKeyDbModel idKeyDbModel);
 
-  List<String> findProcessInstanceIds();
+  List<String> findProcessInstanceIds(int limit, int offset);
 
   void updateKeyById(IdKeyDbModel idKeyDbModel);
 
