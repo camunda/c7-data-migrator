@@ -28,12 +28,6 @@
       <version>2.3.232</version>
     </dependency>
 
-    <dependency>
-      <groupId>io.camunda</groupId>
-      <artifactId>camunda-db-rdbms-schema</artifactId>
-      <version>${version.camunda-8}</version>
-    </dependency>
-
   </dependencies>
 
   <build>

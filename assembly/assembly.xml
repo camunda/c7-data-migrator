@@ -19,7 +19,6 @@
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <excludes>
         <exclude>io.camunda:c7-data-migrator-core</exclude>
-        <exclude>io.camunda:camunda-db-rdbms-schema</exclude>
         <exclude>com.h2database:h2</exclude>
       </excludes> 
     </dependencySet>
@@ -27,7 +26,6 @@
       <outputDirectory>userlib/</outputDirectory>
       <includes>
         <include>com.h2database:h2</include>
-        <include>io.camunda:camunda-db-rdbms-schema</include>
       </includes>
     </dependencySet>
   </dependencySets>
