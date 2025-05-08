@@ -17,7 +17,7 @@
 
     <dependency>
       <groupId>io.camunda</groupId>
-      <artifactId>c7-data-migrator-distro</artifactId>
+      <artifactId>c7-data-migrator-core</artifactId>
       <version>${project.version}</version>
       <scope>runtime</scope>
     </dependency>
@@ -38,13 +38,13 @@
         <version>3.6.0</version>
         <executions>
           <execution>
-            <id>copy-distro-jar</id>
+            <id>copy-core-jar</id>
             <phase>package</phase>
             <goals>
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>c7-data-migrator-distro</includeArtifactIds>
+              <includeArtifactIds>c7-data-migrator-core</includeArtifactIds>
               <outputDirectory>${project.build.directory}/dependency</outputDirectory>
               <includeScope>runtime</includeScope>
             </configuration>

@@ -5,10 +5,8 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.app;
+package io.camunda.migrator;
 
-import io.camunda.migrator.HistoryMigrator;
-import io.camunda.migrator.RuntimeMigrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;

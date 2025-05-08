@@ -18,7 +18,7 @@
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <excludes>
-        <exclude>io.camunda:c7-data-migrator-distro</exclude>
+        <exclude>io.camunda:c7-data-migrator-core</exclude>
         <exclude>com.h2database:h2</exclude>
       </excludes> 
     </dependencySet>
@@ -32,7 +32,7 @@
 
    <files>
   <file>
-    <source>${project.build.directory}/dependency/c7-data-migrator-distro-${project.version}.jar</source>
+    <source>${project.build.directory}/dependency/c7-data-migrator-core-${project.version}.jar</source>
     <outputDirectory>lib</outputDirectory>
     <destName>c7-data-migrator.jar</destName>
     <fileMode>0644</fileMode>
