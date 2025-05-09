@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -13,7 +12,7 @@
 
   <groupId>io.camunda</groupId>
   <artifactId>c7-data-migrator-root</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.0-alpha1-rc1</version>
 
   <packaging>pom</packaging>
 
@@ -54,14 +53,14 @@
     <connection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator
       .git</connection>
     <developerConnection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>0.1.0-alpha1-rc1</tag>
     <url>https://github.com/camunda/c7-data-migrator</url>
   </scm>
 
   <repositories>
     <repository>
       <id>snapshots</id>
-      <snapshots/>
+      <snapshots />
       <url>https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/</url>
     </repository>
   </repositories>
