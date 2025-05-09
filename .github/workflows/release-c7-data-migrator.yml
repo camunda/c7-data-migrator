@@ -140,7 +140,8 @@ jobs:
             -DpushChanges=false \
             -DremoteTagging=false \
             -DignoreSnapshots=true \
-            -Darguments='-DskipTests=true -Dskip.central.release=true -Dskip.camunda.release=true -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
+            -DskipTests=true \
+            -Darguments='-Dskip.central.release=true -Dskip.camunda.release=true -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
 #          TODO undo changes after testing
 #          mvn release:prepare -B \
 #            -Dresume=false \
