@@ -123,18 +123,26 @@ jobs:
           #   This is the reason why we have to set it at least as empty string.
           mvn release:prepare -B \
             -Dresume=false \
-            -Dtag=${RELEASE_VERSION} \
-            -DreleaseVersion=${RELEASE_VERSION} \
-            -DdevelopmentVersion=${DEVELOPMENT_VERSION} \
+            -Dtag="9.9.9" \
+            -DreleaseVersion="9.9.9" \
+            -DdevelopmentVersion="9.9.10-SNAPSHOT" \
             -DpushChanges=false \
             -DremoteTagging=false \
             -DpreparationGoals="" \
             -DignoreSnapshots=true \ 
             -Darguments=''
-#          TODO remove -DignoreSnapshots after testing?
-#          TODO once push_changes is fixed add back in:
-#            -DpushChanges=false \
-#            -DremoteTagging=false \
+#          TODO undo changes after testing
+#          mvn release:prepare -B \
+#            -Dresume=false \
+#            -Dtag=${RELEASE_VERSION} \
+#            -DreleaseVersion=${RELEASE_VERSION} \
+#            -DdevelopmentVersion=${DEVELOPMENT_VERSION} \
+#            -DpushChanges=${PUSH_CHANGES} \
+#            -DremoteTagging=${PUSH_CHANGES} \
+#            -DpreparationGoals="" \
+#            -DignoreSnapshots=true \
+#            -Darguments=''
+
           
 #      - name: Maven Perform Release
 #        id: maven-perform-release
