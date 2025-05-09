@@ -105,7 +105,9 @@ jobs:
         uses: ./.github/actions/setup-maven
         with:
           secrets: ${{ toJSON(secrets) }}
-          
+
+      # TODO camunda/camunda-bpm-platform/issues/4993
+      # Temp build migrator branch in platform
       - name: Clone Platform
         run: |
           cd ../
@@ -116,7 +118,8 @@ jobs:
           cd ../camunda-bpm-platform/engine
           git checkout poc-data-migrator
           mvn clean install -DskipTests --batch-mode
-
+      # End of Temp build migrator branch in platform
+      
       - name: Maven Prepare Release
         id: maven-prepare-release
         run: |
@@ -140,8 +143,8 @@ jobs:
             -DpushChanges=true \
             -DremoteTagging=true \
             -DignoreSnapshots=true \
-            -DpreparationGoals="" \
-            -Darguments='-Dmaven.test.skip=true -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
+            -DpreparationGoals="clean" \
+            -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
 #          TODO undo changes after testing
 #          mvn release:prepare -B \
 #            -Dresume=false \
@@ -152,7 +155,7 @@ jobs:
 #            -DremoteTagging=${PUSH_CHANGES} \
 #            -DpreparationGoals="" \
 #            -DignoreSnapshots=true \
-#            -Darguments=''
+#            -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
 
           
 #      - name: Maven Perform Release
