@@ -29,7 +29,7 @@ env:
   RELEASE_VERSION: ${{ inputs.RELEASE_VERSION }}
   IS_DRY_RUN: ${{ github.event.inputs.IS_DRY_RUN }}
   DEVELOPMENT_VERSION: ${{ inputs.DEVELOPMENT_VERSION }}
-  PUSH_CHANGES: ${{ inputs.dryRun == false }}
+  PUSH_CHANGES: ${{ inputs.IS_DRY_RUN == false }}
   GH_TOKEN: ${{ github.token }}
 
 jobs:
@@ -142,7 +142,7 @@ jobs:
 #          # https://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html
 #          # https://maven.apache.org/maven-release/maven-release-plugin/usage/perform-release.html
 #
-#          ./mvnw release:perform -B \
+#          mvn release:perform -B \
 #            -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
 #            -DlocalCheckout=${{ IS_DRY_RUN }} \
 #            -Darguments='-DskipTests=true -Dskip.central.release=${SKIP_REPO_DEPLOY} -Dskip.camunda.release=${SKIP_REPO_DEPLOY} -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}"
