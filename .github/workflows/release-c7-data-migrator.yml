@@ -128,7 +128,7 @@ jobs:
             -DdevelopmentVersion="9.9.10-SNAPSHOT" \
             -DpushChanges=false \
             -DremoteTagging=false \
-            -DignoreSnapshots=true \ 
+            -DignoreSnapshots=true \
             -Darguments='-DskipTests'
 #          TODO undo changes after testing
 #          mvn release:prepare -B \
