@@ -47,7 +47,6 @@ jobs:
         id: github-token
         uses: camunda/infra-global-github-actions/generate-github-app-token-from-vault-secrets@main
         with:
-#          TODO find C7 equivalent config for this step
           github-app-id-vault-key: GITHUB_APP_ID
           github-app-id-vault-path: secret/data/products/cambpm/ci/github-workflow
           github-app-private-key-vault-key: GITHUB_APP_PRIVATE_KEY
@@ -60,6 +59,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          ref: 4990-add-release-workflow
+#          TODO adjust branch after testing
 #          ref: ${{ RELEASE_BRANCH }}
           # Overriding the default GITHUB_TOKEN with a GitHub App token in order to workaround
           # the known GitHub issue described in https://github.com/camunda/camunda/issues/28522
