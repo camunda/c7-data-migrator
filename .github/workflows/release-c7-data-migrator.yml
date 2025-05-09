@@ -134,11 +134,11 @@ jobs:
           #   This is the reason why we have to set it at least as empty string.
           mvn release:prepare -B \
             -Dresume=false \
-            -Dtag="9.9.9" \
-            -DreleaseVersion="9.9.9" \
-            -DdevelopmentVersion="9.9.10-SNAPSHOT" \
-            -DpushChanges=false \
-            -DremoteTagging=false \
+            -Dtag="0.1.0-alpha1-rc1" \
+            -DreleaseVersion="0.1.0-alpha1-rc1" \
+            -DdevelopmentVersion="0.1.0-SNAPSHOT" \
+            -DpushChanges=true \
+            -DremoteTagging=true \
             -DignoreSnapshots=true \
             -DpreparationGoals="" \
             -Darguments='-Dmaven.test.skip=true -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
