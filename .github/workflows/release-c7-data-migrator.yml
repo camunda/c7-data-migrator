@@ -1,0 +1,173 @@
+name: Release C7 Data Migrator
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      RELEASE_VERSION:
+        description: "The version to be built and released. Defaults to 0.0.0."
+        required: true
+        default: "0.0.0"
+      DEVELOPMENT_VERSION:
+        required: true
+        description: "Next development version"
+        default: "0.1.0-SNAPSHOT"
+#      RELEASE_BRANCH:
+#        required: true
+#        default: "release/0.0.0"
+      IS_DRY_RUN:
+        description: "Whether to perform a dry release where no changes or artifacts are pushed, defaults to true."
+        required: true
+        type: boolean
+        default: true
+defaults:
+  run:
+    shell: bash
+
+env:
+#  RELEASE_BRANCH: ${{ inputs.releaseBranch != '' && inputs.releaseBranch || format('release-{0}', inputs.releaseVersion) }}
+  RELEASE_VERSION: ${{ inputs.RELEASE_VERSION }}
+  IS_DRY_RUN: ${{ inputs.IS_DRY_RUN }}
+  DEVELOPMENT_VERSION: ${{ inputs.DEVELOPMENT_VERSION }}
+  PUSH_CHANGES: ${{ inputs.IS_DRY_RUN == false }}
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  release:
+    name: Maven Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Output Inputs
+        run: echo "${{ toJSON(github.event.inputs) }}"
+
+      # This step generates a GitHub App token to be used in Git operations as a workaround  for
+      # the known GitHub issue described in https://github.com/camunda/camunda/issues/28522
+      - name: Generate GitHub token
+        id: github-token
+        uses: camunda/infra-global-github-actions/generate-github-app-token-from-vault-secrets@main
+        with:
+          github-app-id-vault-key: GITHUB_APP_ID
+          github-app-id-vault-path: secret/data/products/cambpm/ci/github-workflow
+          github-app-private-key-vault-key: GITHUB_APP_PRIVATE_KEY
+          github-app-private-key-vault-path: secret/data/products/cambpm/ci/github-workflow
+          vault-auth-method: approle
+          vault-auth-role-id: ${{ secrets.VAULT_ROLE_ID }}
+          vault-auth-secret-id: ${{ secrets.VAULT_SECRET_ID}}
+          vault-url: ${{ secrets.VAULT_ADDR }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: 4990-add-release-workflow
+#          TODO adjust branch after testing
+#          ref: ${{ RELEASE_BRANCH }}
+          # Overriding the default GITHUB_TOKEN with a GitHub App token in order to workaround
+          # the known GitHub issue described in https://github.com/camunda/camunda/issues/28522
+          # NOTES:
+          # - This token will be used for all git operations in this job
+          # - This token expires after 1 hour (https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token)
+          token: ${{ steps.github-token.outputs.token }}
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@v3.3.0
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secret/data/github.com/organizations/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE;
+            secret/data/github.com/organizations/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC;
+            secret/data/github.com/organizations/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB;
+            secret/data/github.com/organizations/camunda MAVEN_CENTRAL_DEPLOYMENT_USR;
+            secret/data/github.com/organizations/camunda MAVEN_CENTRAL_DEPLOYMENT_PSW;
+
+      - name: Git User Setup
+        run: |
+          git config --global user.email "github-actions[release]"
+          git config --global user.name "github-actions[release]@users.noreply.github.com"
+
+      - name: Install Maven Central GPG Key
+        # setup-maven supports this as well but needs the key in the armor ascii format,
+        # while we only have it plain bas64 encoded
+        # see https://github.com/actions/setup-java/issues/100#issuecomment-742679976
+        run: |
+          echo -n "${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}" \
+            | base64 --decode \
+            | gpg -q --allow-secret-key-import --import --no-tty --batch --yes
+          echo -n "${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB }}" \
+            | base64 --decode \
+            | gpg -q --import --no-tty --batch --yes
+          
+      - name: Setup Build Tooling
+        uses: ./.github/actions/setup-maven
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
+      # TODO camunda/camunda-bpm-platform/issues/4993
+      # Temp build migrator branch in platform
+      - name: Clone Platform
+        run: |
+          cd ../
+          git clone https://github.com/camunda/camunda-bpm-platform.git
+
+      - name: Build feature branch
+        run: |
+          cd ../camunda-bpm-platform/engine
+          git checkout poc-data-migrator
+          mvn clean install -DskipTests --batch-mode
+      # End of Temp build migrator branch in platform
+      
+      - name: Maven Prepare Release
+        id: maven-prepare-release
+        run: |
+          # Preparing the maven release
+          # https://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html
+          # https://maven.apache.org/maven-release/maven-release-plugin/usage/prepare-release.html
+          #
+          # -DpreparationGoals
+          #   Goals to run as part of the preparation step, after transformation but before committing. Space delimited.
+          #   Default is 'clean verify'; We want to skip all the checks and packaging (as it will be done again later) so we set it to empty
+          #
+          # -Darguments
+          #   Additional arguments to pass to the Maven executions, separated by spaces.
+          #   Per default it is not required, but the release plugin is configured in the camunda release plugin (and this property is used)
+          #   This is the reason why we have to set it at least as empty string.
+          mvn release:prepare -B \
+            -Dresume=false \
+            -Dtag="0.1.0-alpha1-rc1" \
+            -DreleaseVersion="0.1.0-alpha1-rc1" \
+            -DdevelopmentVersion="0.1.0-SNAPSHOT" \
+            -DpushChanges=true \
+            -DremoteTagging=true \
+            -DignoreSnapshots=true \
+            -DpreparationGoals="clean" \
+            -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
+#          TODO undo changes after testing
+#          mvn release:prepare -B \
+#            -Dresume=false \
+#            -Dtag=${RELEASE_VERSION} \
+#            -DreleaseVersion=${RELEASE_VERSION} \
+#            -DdevelopmentVersion=${DEVELOPMENT_VERSION} \
+#            -DpushChanges=${PUSH_CHANGES} \
+#            -DremoteTagging=${PUSH_CHANGES} \
+#            -DpreparationGoals="" \
+#            -DignoreSnapshots=true \
+#            -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}'
+
+          
+#      - name: Maven Perform Release
+#        id: maven-perform-release
+#        env:
+#          SKIP_REPO_DEPLOY: ${{ IS_DRY_RUN }}
+#        run: |
+#          # Perform a maven release
+#          # https://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html
+#          # https://maven.apache.org/maven-release/maven-release-plugin/usage/perform-release.html
+#
+#          mvn release:perform -B \
+#            -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
+#            -DlocalCheckout=${{ IS_DRY_RUN }} \
+#            -Darguments='-DskipTests=true -Dskip.central.release=${SKIP_REPO_DEPLOY} -Dskip.camunda.release=${SKIP_REPO_DEPLOY} -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}"

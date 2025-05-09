@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.camunda</groupId>
+    <artifactId>camunda-release-parent</artifactId>
+    <version>3.9.1</version>
+    <!-- do not remove empty tag - http://jira.codehaus.org/browse/MNG-4687 -->
+    <relativePath />
+  </parent>
 
   <groupId>io.camunda</groupId>
   <artifactId>c7-data-migrator-root</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.0-alpha1-rc1</version>
 
   <packaging>pom</packaging>
 
@@ -18,11 +25,20 @@
     <version.camunda-7>7.24.0-SNAPSHOT</version.camunda-7>
     <version.camunda-8>8.8.0-SNAPSHOT</version.camunda-8>
     <version.spring-boot>3.4.4</version.spring-boot>
+    <version.java>21</version.java>
 
     <url.source>jdbc:h2:~/Downloads/c8_rdbms-source.db;TRACE_LEVEL_FILE=0;DB_CLOSE_ON_EXIT=FALSE</url.source>
     <url.target>jdbc:h2:~/Downloads/c8_rdbms-target.db;TRACE_LEVEL_FILE=0;DB_CLOSE_ON_EXIT=FALSE</url.target>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+<!--    Using C8 repos for now -->
+<!--    <nexus.snapshot.repository>https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/</nexus.snapshot.repository>-->
+<!--    <nexus.release.repository>https://artifacts.camunda.com/artifactory/zeebe-io/</nexus.release.repository>-->
+<!--    <nexus.sonatype.url>-->
+   <nexus.snapshot.repository>removedForTesting</nexus.snapshot.repository>
+    <nexus.release.repository>removedForTesting</nexus.release.repository>
+    <nexus.sonatype.url>removedForTesting</nexus.sonatype.url>
   </properties>
 
   <modules>
@@ -33,10 +49,18 @@
     <module>assembly</module>
   </modules>
 
+  <scm>
+    <connection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator
+      .git</connection>
+    <developerConnection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator.git</developerConnection>
+    <tag>0.1.0-alpha1-rc1</tag>
+    <url>https://github.com/camunda/c7-data-migrator</url>
+  </scm>
+
   <repositories>
     <repository>
       <id>snapshots</id>
-      <snapshots/>
+      <snapshots />
       <url>https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/</url>
     </repository>
   </repositories>
@@ -86,6 +110,4 @@
       </plugin>
     </plugins>
   </build>
-
-
 </project>
