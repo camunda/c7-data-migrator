@@ -128,7 +128,9 @@ jobs:
             -DpushChanges=${PUSH_CHANGES} \
             -DremoteTagging=${PUSH_CHANGES} \
             -DpreparationGoals="" \
+            -DignoreSnapshots=true \ 
             -Darguments=''
+#          TODO remove -DignoreSnapshots after testing?
           
 #      - name: Maven Perform Release
 #        id: maven-perform-release
