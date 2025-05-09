@@ -34,9 +34,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 <!--    Using C8 repos for now -->
-    <nexus.snapshot.repository>https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/</nexus.snapshot.repository>
-    <nexus.release.repository>https://artifacts.camunda.com/artifactory/zeebe-io/</nexus.release.repository>
-    <nexus.sonatype.url>https://s01.oss.sonatype.org</nexus.sonatype.url>
+<!--    <nexus.snapshot.repository>https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/</nexus.snapshot.repository>-->
+<!--    <nexus.release.repository>https://artifacts.camunda.com/artifactory/zeebe-io/</nexus.release.repository>-->
+<!--    <nexus.sonatype.url>-->
+   <nexus.snapshot.repository>removedForTesting</nexus.snapshot.repository>
+    <nexus.release.repository>removedForTesting</nexus.release.repository>
+    <nexus.sonatype.url>removedForTesting</nexus.sonatype.url>
   </properties>
 
   <modules>
