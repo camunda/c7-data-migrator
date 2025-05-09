@@ -129,7 +129,7 @@ jobs:
             -DpushChanges=false \
             -DremoteTagging=false \
             -DignoreSnapshots=true \ 
-            -Darguments="-Dmaven.deploy.skip=true -DskipTests -DskipNexusStagingDeployMojo=true"
+            -Darguments=''
 #          TODO undo changes after testing
 #          mvn release:prepare -B \
 #            -Dresume=false \
