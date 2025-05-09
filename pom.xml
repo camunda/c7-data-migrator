@@ -47,6 +47,14 @@
     <module>assembly</module>
   </modules>
 
+  <scm>
+    <connection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator
+      .git</connection>
+    <developerConnection>scm:git:https://${env.GITHUB_TOKEN_USR}:${env.GITHUB_TOKEN_PSW}@github.com/camunda/c7-data-migrator.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/camunda/c7-data-migrator</url>
+  </scm>
+
   <repositories>
     <repository>
       <id>snapshots</id>
