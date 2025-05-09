@@ -129,7 +129,7 @@ jobs:
             -DpushChanges=false \
             -DremoteTagging=false \
             -DignoreSnapshots=true \ 
-            -Darguments=''
+            -Darguments='-DskipTests'
 #          TODO undo changes after testing
 #          mvn release:prepare -B \
 #            -Dresume=false \
