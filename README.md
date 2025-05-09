@@ -1,6 +1,5 @@
 # C7 Data Migrator
 
-
 ### How to use the Migrator
 
 1. Prerequisites: Use Java 21
@@ -12,6 +11,21 @@
 1. Build or download the distribution.
 1. Start Migrator (start.sh/start.bat) and wait to finish.
 1. Navigate to Operate and check result.
+
+## Development Setup
+1. Prerequisites: Use Java 21
+1. Clone and build the [Camunda 7 platform](https://github.com/camunda/camunda-bpm-platform)
+1. Set up Camunda 8
+   1. Download Camunda [c8run-8.8](https://github.com/camunda/camunda/releases/tag/c8run-8.8)
+   1. Extract files
+   1. Start from distribution root by running `./start.sh`
+1. Clone this repository
+1. Build from root with `mvn clean install`
+1. (Optional) Run the [example data generator](./examples/generate-runtime/src/main/java/io/camunda/migrator/example/ExampleApplication.java)
+1. (Optional) Run the migrator
+   1. Either using [the example](./examples/migrate-runtime/src/main/java/io/camunda/migrator/example/RuntimeExampleApplication.java)
+   1. Or by building, extracting and running [the distribution](./assembly)
+
 
 ## Contributing
 
