@@ -35,7 +35,7 @@ public class MigratorApp {
       } else if (appArgs.containsOption(RUN_HISTORY_MIGRATION)) {
         migrateHistory(context);
       } else {
-        LOGGER.debug("Migrating both runtime and history.");
+        LOGGER.info("Migrating both runtime and history.");
         migrateRuntime(context);
         migrateHistory(context);
       }
