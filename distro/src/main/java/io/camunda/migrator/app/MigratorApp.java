@@ -28,16 +28,21 @@ public class MigratorApp {
   public static void main(String[] args) {
     ConfigurableApplicationContext context = SpringApplication.run(MigratorApp.class, args);
     ApplicationArguments appArgs = new DefaultApplicationArguments(args);
+    LOGGER.debug("Migrator started.");
     try {
       if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
         migrateRuntime(context);
       } else if (appArgs.containsOption(RUN_HISTORY_MIGRATION)) {
         migrateHistory(context);
       } else {
-        LOGGER.info("Migrating both runtime and history.");
+        LOGGER.debug("Migrating both runtime and history.");
         migrateRuntime(context);
         migrateHistory(context);
       }
+      LOGGER.debug("Migration completed.");
+    } catch (Exception e) {
+      LOGGER.error("Migration failed.", e);
+      throw e;
     } finally {
       SpringApplication.exit(context);
     }
