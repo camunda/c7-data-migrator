@@ -99,7 +99,8 @@ public class RuntimeMigrator {
       });
     }
 
-    int limit = 100; // Number of process instances per iteration
+    int initial = 100; // Number of process instances per iteration
+    int limit = initial;
     int offset = 0;  // Starting index
     List<String> processInstanceIds;
 
@@ -108,7 +109,9 @@ public class RuntimeMigrator {
       processInstanceIds.forEach(legacyProcessInstanceId -> {
         prepareDataAndCreateC8ProcessInstance(legacyProcessInstanceId);
       });
-      offset += limit; // Move to the next page
+      // Move to the next page
+      offset += limit;
+      limit += initial;
     } while (!processInstanceIds.isEmpty());
   }
 
