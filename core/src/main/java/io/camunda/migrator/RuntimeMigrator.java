@@ -19,6 +19,8 @@ import org.camunda.bpm.engine.impl.persistence.entity.ActivityInstanceImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.TransitionInstanceImpl;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,11 +48,17 @@ import static io.camunda.migrator.HistoryMigrator.BATCH_SIZE;
 @Component
 public class RuntimeMigrator {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
+  public static final int DEFAULT_MAX_JOB_COUNT = 500;
+  // configurable?
+  protected final int maxJobsToActivate = DEFAULT_MAX_JOB_COUNT;
+  protected final Duration migratorJobsTimeout = Duration.ofMinutes(1);
   @Autowired
   protected RuntimeService runtimeService;
 
   @Autowired
   private IdKeyMapper idKeyMapper;
+
 
   // TODO: make it configurable from the application.yml
   // TODO: Spring Boot Starter that makes configuring the client reusable? https://github.com/camunda/camunda/tree/main/clients/spring-boot-starter-camunda-sdk
@@ -93,85 +101,109 @@ public class RuntimeMigrator {
       });
     }
 
-    // TODO: paginate this
-    idKeyMapper.findProcessInstanceIds().forEach(legacyProcessInstanceId -> {
-      Map<String, Object> globalVariables = new HashMap<>();
+    int limit = 100; // Number of process instances per iteration
+    int offset = 0;  // Starting index
+    List<String> processInstanceIds;
 
-      runtimeService.createVariableInstanceQuery()
-          .activityInstanceIdIn(legacyProcessInstanceId)
-          .list()
-          .forEach(variable -> globalVariables.put(variable.getName(), variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
+    do {
+      processInstanceIds = idKeyMapper.findProcessInstanceIds(limit, offset);
+      processInstanceIds.forEach(legacyProcessInstanceId -> {
+        prepareDataAndCreateC8ProcessInstance(legacyProcessInstanceId);
+      });
+      offset += limit; // Move to the next page
+    } while (!processInstanceIds.isEmpty());
+  }
 
-      globalVariables.put("legacyId", legacyProcessInstanceId);
+  private void prepareDataAndCreateC8ProcessInstance(String legacyProcessInstanceId) {
+    Map<String, Object> globalVariables = new HashMap<>();
 
-      String bpmnProcessId = runtimeService.createProcessInstanceQuery()
-          .processInstanceId(legacyProcessInstanceId)
-          .singleResult()
-          .getProcessDefinitionKey();
+    runtimeService.createVariableInstanceQuery()
+        .activityInstanceIdIn(legacyProcessInstanceId)
+        .list()
+        .forEach(variable -> globalVariables.put(variable.getName(), variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
 
-      long processInstanceKey = camundaClient.newCreateInstanceCommand()
-          .bpmnProcessId(bpmnProcessId)
-          .latestVersion()
-          .variables(globalVariables) // process instance global variables
+    globalVariables.put("legacyId", legacyProcessInstanceId);
+
+    String bpmnProcessId = runtimeService.createProcessInstanceQuery()
+        .processInstanceId(legacyProcessInstanceId)
+        .singleResult()
+        .getProcessDefinitionKey();
+
+    long processInstanceKey = camundaClient.newCreateInstanceCommand()
+        .bpmnProcessId(bpmnProcessId)
+        .latestVersion()
+        .variables(globalVariables) // process instance global variables
+        .send()
+        .join()
+        .getProcessInstanceKey();
+
+    var keyIdDbModel = new IdKeyDbModel();
+    keyIdDbModel.setId(legacyProcessInstanceId);
+    keyIdDbModel.setKey(processInstanceKey);
+    idKeyMapper.updateKeyById(keyIdDbModel);
+
+    activateMigratorJobsAndModifyInstances();
+  }
+
+  private void activateMigratorJobsAndModifyInstances() {
+    List<ActivatedJob> migratorJobs;
+    boolean hasJobs = true;
+    while (hasJobs) {
+      migratorJobs = camundaClient.newActivateJobsCommand()
+          .jobType("migrator")
+          .maxJobsToActivate(maxJobsToActivate)
+          .timeout(migratorJobsTimeout)
           .send()
           .join()
-          .getProcessInstanceKey();
+          .getJobs();
+      if (migratorJobs.isEmpty()) {
+        hasJobs = false;
+        LOGGER.debug("No migrator jobs available.");
+      } else {
+        LOGGER.debug("Migrator jobs found: " + migratorJobs.size());
+      }
+      executeMigratorJobs(migratorJobs);
+    }
+  }
 
-      var keyIdDbModel = new IdKeyDbModel();
-      keyIdDbModel.setId(legacyProcessInstanceId);
-      keyIdDbModel.setKey(processInstanceKey);
-      idKeyMapper.updateKeyById(keyIdDbModel);
+  private void executeMigratorJobs(List<ActivatedJob> migratorJobs) {
+    migratorJobs.forEach(activatedJob -> {
 
-      List<ActivatedJob> migratorJobs = null;
-      do {
-        migratorJobs = camundaClient.newActivateJobsCommand()
-            .jobType("migrator")
-            // TODO: review #maxJobsToActivate and #timeout
-            .maxJobsToActivate(Integer.MAX_VALUE)
-            .timeout(Duration.ofMinutes(1))
-            .send()
-            .join()
-            .getJobs();
-            migratorJobs.forEach(activatedJob -> {
+      String legacyId = (String) activatedJob.getVariable("legacyId");
 
-              String legacyId = (String) activatedJob.getVariable("legacyId");
+      ModifyProcessInstanceCommandStep1 modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(
+              activatedJob.getProcessInstanceKey())
+          // Cancel start event instance where migrator job sits to avoid executing the activities twice.
+          .terminateElement(activatedJob.getElementInstanceKey()).and();
 
-              ModifyProcessInstanceCommandStep1 modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(
-                      activatedJob.getProcessInstanceKey())
-                  // Cancel start event instance where migrator job sits to avoid executing the activities twice.
-                  .terminateElement(activatedJob.getElementInstanceKey()).and();
+      ModifyProcessInstanceCommandStep3 modifyInstructions = null;
+      ActivityInstance activityInstanceTree = runtimeService.getActivityInstance(legacyId);
+      Map<String, ActInstance> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
 
-              ModifyProcessInstanceCommandStep3 modifyInstructions = null;
-              ActivityInstance activityInstanceTree = runtimeService.getActivityInstance(legacyId);
-              Map<String, ActInstance> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree,
-                  new HashMap<>());
+      // TODO: remove experiment. We won't support multi-instance at all it in the MVP.
+      removeMultiInstances(activityInstanceMap);
 
-              // TODO: remove experiment. We won't support multi-instance at all it in the MVP.
-              removeMultiInstances(activityInstanceMap);
+    for (String activityInstanceId : activityInstanceMap.keySet()) {
+      ActInstance actInstance = activityInstanceMap.get(activityInstanceId);
+      String activityId = actInstance.id().split("#multiInstanceBody")[0];
 
-              for (String activityInstanceId : activityInstanceMap.keySet()) {
-                ActInstance actInstance = activityInstanceMap.get(activityInstanceId);
-                String activityId = actInstance.id().split("#multiInstanceBody")[0];
+      Map<String, Object> localVariables = new HashMap<>();
 
-                Map<String, Object> localVariables = new HashMap<>();
+      runtimeService.createVariableInstanceQuery()
+          .activityInstanceIdIn(activityInstanceId)
+          .list()
+          .forEach(variable -> localVariables.put(variable.getName(),
+              variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
 
-                runtimeService.createVariableInstanceQuery()
-                    .activityInstanceIdIn(activityInstanceId)
-                    .list()
-                    .forEach(variable -> localVariables.put(variable.getName(),
-                        variable.getValue())); // Collectors#toMap cannot handle null values and throws NPE.
-
-                String subProcessInstanceId = actInstance.subProcessInstanceId();
-                if (subProcessInstanceId != null) {
-                  localVariables.put("legacyId", subProcessInstanceId);
-                }
-                modifyInstructions = modifyProcessInstance.activateElement(activityId)
-                    .withVariables(localVariables, activityId);
-              }
-              modifyInstructions.send().join();
-              // no need to complete the job since the modification canceled the migrator job in the start event
-            });
-      } while (!migratorJobs.isEmpty());
+      String subProcessInstanceId = actInstance.subProcessInstanceId();
+      if (subProcessInstanceId != null) {
+        localVariables.put("legacyId", subProcessInstanceId);
+      }
+      modifyInstructions = modifyProcessInstance.activateElement(activityId)
+          .withVariables(localVariables, activityId);
+    }
+    modifyInstructions.send().join();
+    // no need to complete the job since the modification canceled the migrator job in the start event
     });
   }
 
