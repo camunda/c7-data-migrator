@@ -41,6 +41,9 @@ Contents:
   userlib/
       Add custom database drivers, plugins, or other extensions here.
 
+  logs/
+      Created during run time and contains the log outputs
+
 
 ==================
 
