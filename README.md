@@ -14,7 +14,6 @@
 
 ## Development Setup
 1. Prerequisites: Use Java 21
-1. Clone and build the [Camunda 7 process engine](https://github.com/camunda/camunda-bpm-platform/tree/master/engine)
 1. Set up Camunda 8
    1. Download Camunda [c8run-8.8](https://github.com/camunda/camunda/releases/tag/c8run-8.8)
    1. Extract files
