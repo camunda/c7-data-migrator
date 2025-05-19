@@ -28,6 +28,7 @@ public class MigratorApp {
   public static void main(String[] args) {
     ConfigurableApplicationContext context = SpringApplication.run(MigratorApp.class, args);
     ApplicationArguments appArgs = new DefaultApplicationArguments(args);
+    LOGGER.debug("Migrator started.");
     try {
       if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
         migrateRuntime(context);
@@ -38,6 +39,10 @@ public class MigratorApp {
         migrateRuntime(context);
         migrateHistory(context);
       }
+      LOGGER.debug("Migration completed.");
+    } catch (Exception e) {
+      LOGGER.error("Migration failed.", e);
+      throw e;
     } finally {
       SpringApplication.exit(context);
     }
