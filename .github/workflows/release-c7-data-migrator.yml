@@ -108,51 +108,6 @@ jobs:
           vault-secret-id: ${{ secrets.VAULT_SECRET_ID }}
           camunda-nexus: true
 
-      - name: Maven Prepare Release
-        id: maven-prepare-release
-        run: |
-          # Preparing the maven release
-          # https://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html
-          # https://maven.apache.org/maven-release/maven-release-plugin/usage/prepare-release.html
-          mvn release:prepare -B \
-            -Dresume=false \
-            -Dtag=${RELEASE_VERSION} \
-            -DreleaseVersion=${RELEASE_VERSION} \
-            -DdevelopmentVersion=${DEVELOPMENT_VERSION} \
-            -DpushChanges=${PUSH_CHANGES} \
-            -DremoteTagging=${PUSH_CHANGES} \
-            -DignoreSnapshots=true \
-            -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" -DskipTests=true'
-
-      - name: Collect Release Artifacts
-        id: release-artifacts
-        run: |
-          ARTIFACT_DIR=$(mktemp -d)
-          cp assembly/target/c7-data-migrator-assembly-${RELEASE_VERSION}.tar.gz "${ARTIFACT_DIR}/"
-          cp assembly/target/c7-data-migrator-assembly-${RELEASE_VERSION}.zip "${ARTIFACT_DIR}/"
-          echo "dir=${ARTIFACT_DIR}" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-${RELEASE_VERSION}
-          path: ${{ steps.release-artifacts.outputs.dir }}
-          retention-days: 14
-
-      - name: Maven Perform Release - Artifactory
-        id: maven-perform-release-camunda
-        env:
-          SKIP_REPO_DEPLOY: ${{ inputs.IS_DRY_RUN }}
-        run: |
-          # Perform a maven release
-          # https://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html
-          # https://maven.apache.org/maven-release/maven-release-plugin/usage/perform-release.html
-          mvn release:perform -B \
-            -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
-            -DlocalCheckout=${{ inputs.IS_DRY_RUN }} \
-            -Psonatype-oss-release,distro \
-            -Darguments='-DskipTests=true -Dskip.central.release=true -Dskip.camunda.release=${SKIP_REPO_DEPLOY}'
-
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
