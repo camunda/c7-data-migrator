@@ -7,22 +7,7 @@
  */
 package io.camunda.migrator;
 
-import io.camunda.client.CamundaClient;
-import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1;
-import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3;
-import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.migrator.history.IdKeyDbModel;
-import io.camunda.migrator.history.IdKeyMapper;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.impl.ProcessInstanceQueryImpl;
-import org.camunda.bpm.engine.impl.persistence.entity.ActivityInstanceImpl;
-import org.camunda.bpm.engine.impl.persistence.entity.TransitionInstanceImpl;
-import org.camunda.bpm.engine.runtime.ActivityInstance;
-import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import static io.camunda.migrator.HistoryMigrator.BATCH_SIZE;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,16 +27,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.camunda.client.api.command.DeployResourceCommandStep1.DeployResourceCommandStep2;
-import static io.camunda.migrator.HistoryMigrator.BATCH_SIZE;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.impl.ProcessInstanceQueryImpl;
+import org.camunda.bpm.engine.impl.persistence.entity.ActivityInstanceImpl;
+import org.camunda.bpm.engine.impl.persistence.entity.TransitionInstanceImpl;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
+import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import io.camunda.client.CamundaClient;
+import io.camunda.client.api.command.DeployResourceCommandStep1.DeployResourceCommandStep2;
+import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1;
+import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3;
+import io.camunda.client.api.response.ActivatedJob;
+import io.camunda.migrator.history.IdKeyDbModel;
+import io.camunda.migrator.history.IdKeyMapper;
 
 @Component
 public class RuntimeMigrator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
   public static final int DEFAULT_MAX_JOB_COUNT = 500;
-  // configurable?
-  protected final int maxJobsToActivate = DEFAULT_MAX_JOB_COUNT;
+  public static final int DEFAULT_MAX_PROCESS_INSTANCE = 100;
+
+  protected int maxJobsToActivate = DEFAULT_MAX_JOB_COUNT;
+  protected int maxProcessInstance = DEFAULT_MAX_PROCESS_INSTANCE;
   protected final Duration migratorJobsTimeout = Duration.ofMinutes(1);
   @Autowired
   protected RuntimeService runtimeService;
@@ -63,6 +66,22 @@ public class RuntimeMigrator {
   protected CamundaClient camundaClient;
 
   protected boolean autoDeployment = true;
+
+  public int getMaxJobsToActivate() {
+    return maxJobsToActivate;
+  }
+
+  public void setMaxJobsToActivate(int maxJobsToActivate) {
+    this.maxJobsToActivate = maxJobsToActivate;
+  }
+
+  public int getMaxProcessInstance() {
+    return maxProcessInstance;
+  }
+
+  public void setMaxProcessInstance(int maxProcessInstance) {
+    this.maxProcessInstance = maxProcessInstance;
+  }
 
   public void migrate() {
     // TODO: remove deploying resources automatically: we expect them to be already deployed in C8.
@@ -99,20 +118,24 @@ public class RuntimeMigrator {
       });
     }
 
-    int initial = 100; // Number of process instances per iteration
-    int limit = initial;
+    int limit = maxProcessInstance;
     int offset = 0;  // Starting index
     List<String> processInstanceIds;
 
     do {
+      // limit and offset are kept as we filter only non migrated instances
       processInstanceIds = idKeyMapper.findProcessInstanceIds(limit, offset);
+      LOGGER.debug("Fetched instances to migrate: " + processInstanceIds.size());
+
       processInstanceIds.forEach(legacyProcessInstanceId -> {
         prepareDataAndCreateC8ProcessInstance(legacyProcessInstanceId);
       });
-      // Move to the next page
-      offset += limit;
-      limit += initial;
     } while (!processInstanceIds.isEmpty());
+
+    activateMigratorJobsAndModifyInstances(); // TODO test multi level processes
+    // doc idempotency
+    // what if there are more than one migrator in a process instance
+    LOGGER.debug("No more instances to migrate.");
   }
 
   private void prepareDataAndCreateC8ProcessInstance(String legacyProcessInstanceId) {
@@ -142,29 +165,6 @@ public class RuntimeMigrator {
     keyIdDbModel.setId(legacyProcessInstanceId);
     keyIdDbModel.setKey(processInstanceKey);
     idKeyMapper.updateKeyById(keyIdDbModel);
-
-    activateMigratorJobsAndModifyInstances();
-  }
-
-  private void activateMigratorJobsAndModifyInstances() {
-    List<ActivatedJob> migratorJobs;
-    boolean hasJobs = true;
-    while (hasJobs) {
-      migratorJobs = camundaClient.newActivateJobsCommand()
-          .jobType("migrator")
-          .maxJobsToActivate(maxJobsToActivate)
-          .timeout(migratorJobsTimeout)
-          .send()
-          .join()
-          .getJobs();
-      if (migratorJobs.isEmpty()) {
-        hasJobs = false;
-        LOGGER.debug("No migrator jobs available.");
-      } else {
-        LOGGER.debug("Migrator jobs found: " + migratorJobs.size());
-      }
-      executeMigratorJobs(migratorJobs);
-    }
   }
 
   private void executeMigratorJobs(List<ActivatedJob> migratorJobs) {
@@ -206,6 +206,27 @@ public class RuntimeMigrator {
     modifyInstructions.send().join();
     // no need to complete the job since the modification canceled the migrator job in the start event
     });
+  }
+
+  private void activateMigratorJobsAndModifyInstances() {
+    List<ActivatedJob> migratorJobs;
+    boolean hasJobs = true;
+    while (hasJobs) {
+      migratorJobs = camundaClient.newActivateJobsCommand()
+          .jobType("migrator")
+          .maxJobsToActivate(maxJobsToActivate)
+          .timeout(migratorJobsTimeout)
+          .send()
+          .join()
+          .getJobs();
+      if (migratorJobs.isEmpty()) {
+        hasJobs = false;
+        LOGGER.debug("No more migrator jobs available.");
+      } else {
+        LOGGER.debug("Migrator jobs found: " + migratorJobs.size());
+        executeMigratorJobs(migratorJobs);
+      }
+    }
   }
 
   /**
@@ -290,5 +311,6 @@ public class RuntimeMigrator {
   public void setAutoDeployment(boolean autoDeployment) {
     this.autoDeployment = autoDeployment;
   }
+
 
 }

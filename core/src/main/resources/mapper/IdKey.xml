@@ -13,8 +13,16 @@
     SELECT ID
     FROM ${prefix}MIGRATION_MAPPING
     WHERE TYPE = 'runtimeProcessInstance' AND `KEY` IS NULL
+    ORDER BY ID
     LIMIT #{limit}
     OFFSET #{offset}
+  </select>
+  
+    <select id="findAllProcessInstanceIds">
+    SELECT ID
+    FROM ${prefix}MIGRATION_MAPPING
+    WHERE TYPE = 'runtimeProcessInstance' AND `KEY` IS NULL
+    ORDER BY ID
   </select>
 
   <update id="updateKeyById" parameterType="io.camunda.migrator.history.IdKeyDbModel">

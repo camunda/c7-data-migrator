@@ -19,6 +19,8 @@ public interface IdKeyMapper {
   void insert(IdKeyDbModel idKeyDbModel);
 
   List<String> findProcessInstanceIds(@Param("limit") int limit, @Param("offset") int offset);
+  
+  List<String> findAllProcessInstanceIds();
 
   void updateKeyById(IdKeyDbModel idKeyDbModel);
 

@@ -27,6 +27,7 @@ public abstract class RuntimeMigrationAbstractTest {
   @Autowired
   protected RepositoryService repositoryService;
 
+
   @Autowired
   protected CamundaClient camundaClient;
 
@@ -52,5 +53,12 @@ public abstract class RuntimeMigrationAbstractTest {
   protected void deployProcessInC7AndC8(String fileName) {
     deployCamunda7Process("io/camunda/migrator/bpmn/c7/" + fileName);
     deployCamunda8Process("io/camunda/migrator/bpmn/c8/" + fileName);
+  }
+
+  protected void configureMaxJobsToActivate(int maxJobsCount){
+    runtimeMigrator.setMaxJobsToActivate(maxJobsCount);
+  }
+  protected void configureMaxProcessInstances(int maxPICount){
+    runtimeMigrator.setMaxProcessInstance(maxPICount);
   }
 }
