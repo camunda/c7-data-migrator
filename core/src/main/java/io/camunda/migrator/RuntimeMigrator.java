@@ -124,7 +124,7 @@ public class RuntimeMigrator {
 
     do {
       // limit and offset are kept as we filter only non migrated instances
-      processInstanceIds = idKeyMapper.findProcessInstanceIds(limit, offset);
+      processInstanceIds = idKeyMapper.findNonProcessInstanceIds(limit, offset);
       LOGGER.debug("Fetched instances to migrate: " + processInstanceIds.size());
 
       processInstanceIds.forEach(legacyProcessInstanceId -> {
