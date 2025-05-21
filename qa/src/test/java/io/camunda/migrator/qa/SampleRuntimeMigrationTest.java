@@ -17,36 +17,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.camunda.client.api.search.response.ProcessInstance;
 import io.camunda.process.test.api.CamundaAssert;
 import java.util.List;
-import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class SampleRuntimeMigrationTest extends RuntimeMigrationAbstractTest {
 
-  @Autowired
-  private RuntimeService runtimeService;
 
-  @Autowired
-  private RepositoryService repositoryService;
-
-  @Autowired
-  private TaskService taskService;
-
-
-
-  @AfterEach
-  public void cleanup() {
-    // repositoryService.createDeploymentQuery().list().forEach(d ->
-    // repositoryService.deleteDeployment(d.getId(), true));
-    // TODO how to cleanup c8 data?
-    List<ProcessInstance> items = camundaClient.newProcessInstanceSearchRequest().send().join().items();
-    items.forEach(i -> camundaClient.newCancelInstanceCommand(i.getProcessInstanceKey()));
-    items.forEach(i -> camundaClient.newDeleteResourceCommand(i.getProcessInstanceKey()));
-  }
 
   @Test
   public void simpleProcessMigrationTest() {

@@ -13,43 +13,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.camunda.client.api.search.response.ProcessInstance;
 import io.camunda.migrator.RuntimeMigrator;
 import java.util.List;
-import org.camunda.bpm.engine.RepositoryService;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
-import org.junit.After;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @ExtendWith(OutputCaptureExtension.class)
 class MaxProcessInstanceConfigurationTest extends RuntimeMigrationAbstractTest {
 
-  @Autowired
-  private RuntimeService runtimeService;
-
-  @Autowired
-  private RepositoryService repositoryService;
-
-  @Autowired
-  private TaskService taskService;
-
-
-  @After
+  @AfterEach
   public void reset() {
     configureMaxProcessInstances(RuntimeMigrator.DEFAULT_MAX_PROCESS_INSTANCE);
-//    configureMaxJobsToActivate(RuntimeMigrator.DEFAULT_MAX_JOB_COUNT);
-  }
-
-  @AfterEach
-  public void cleanup() {
-//    repositoryService.createDeploymentQuery().list().forEach(d -> repositoryService.deleteDeployment(d.getId(), true));
-    // TODO how to cleanup c8 data?
-    List<ProcessInstance> items = camundaClient.newProcessInstanceSearchRequest().send().join().items();
-    items.forEach(i -> camundaClient.newCancelInstanceCommand(i.getProcessInstanceKey()));
-    items.forEach(i -> camundaClient.newDeleteResourceCommand(i.getProcessInstanceKey()));
   }
 
   @Test
