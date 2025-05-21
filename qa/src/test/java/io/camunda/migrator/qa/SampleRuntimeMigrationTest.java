@@ -25,11 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class SampleRuntimeMigrationTest extends RuntimeMigrationAbstractTest {
 
-  @Autowired
-  private RuntimeService runtimeService;
 
-  @Autowired
-  private TaskService taskService;
 
   @Test
   public void simpleProcessMigrationTest() {

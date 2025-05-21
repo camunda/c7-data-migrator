@@ -1,3 +1,7 @@
 migrator:
   c7.auto-ddl: true
   rdbms-exporter.auto-ddl: true
+
+# how to set it on test level
+logging:
+  level.io.camunda.migrator: DEBUG
