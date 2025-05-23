@@ -7,30 +7,36 @@ classPath="$BASEDIR/configuration/userlib"
 JAR_PATH="$BASEDIR/internal/c7-data-migrator.jar"
 COMMON_OPTS="-Dloader.path=$classPath -Dmigrator.deployment-dir=$DEPLOYMENT_DIR -Dspring.config.location=file:$CONFIGURATION"
 
-OPTIONS_HELP="Options:
-  --runtime     - Migrate runtime data only
-  --history     - Migrate history data only
-"
+print_usage() {
+  echo "Usage: run.sh [--runtime] [--history] [--retry]"
+  echo "Options:"
+  echo "  --runtime     - Migrate runtime data only"
+  echo "  --history     - Migrate history data only"
+  echo "  --retry       - Retry only previously skipped data"
+}
 
-if [[ $# -gt 1 ]]; then
-  echo "Error: Only one flag allowed."
-  printf "Usage: run.sh [--runtime|--history] \n%s" "$OPTIONS_HELP"
+if [[ $# -gt 3 ]]; then
+  echo "Error: Too many arguments."
+  print_usage
   exit 1
 fi
 
-if [[ $# -eq 1 ]]; then
-  case "$1" in
-    --runtime|--history)
-      echo "Starting migration with flag: $1"
-      java $COMMON_OPTS -jar "$JAR_PATH" "$1"
+for arg in "$@"; do
+  case "$arg" in
+    --runtime|--history|--retry)
       ;;
     *)
-      echo "Invalid flag: $1"
-      printf "Usage: run.sh [--runtime|--history] \n%s" "$OPTIONS_HELP"
+      echo "Invalid flag: $arg"
+      print_usage
       exit 1
       ;;
   esac
+done
+
+if [[ $# -eq 0 ]]; then
+  echo "Starting application without migration flag"
+  java $COMMON_OPTS -jar "$JAR_PATH" --runtime --history
 else
-  echo "Starting application without migration flag."
-  java $COMMON_OPTS -jar "$JAR_PATH"
+  echo "Starting migration with flags: $*"
+  java $COMMON_OPTS -jar "$JAR_PATH" "$@"
 fi

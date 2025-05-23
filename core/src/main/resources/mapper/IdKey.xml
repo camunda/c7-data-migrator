@@ -9,7 +9,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="io.camunda.migrator.history.IdKeyMapper">
 
-  <select id="findProcessInstanceIds">
+  <select id="findSkippedProcessInstanceIds">
     SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = 'runtimeProcessInstance' AND `KEY` IS NULL
   </select>
 

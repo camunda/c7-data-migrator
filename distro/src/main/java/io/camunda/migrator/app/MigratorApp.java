@@ -25,37 +25,52 @@ public class MigratorApp {
 
   protected static final String RUN_HISTORY_MIGRATION = "history";
   protected static final String RUN_RUNTIME_MIGRATION = "runtime";
+  protected static final String RUN_RETRY_MIGRATION = "retry";
 
   public static void main(String[] args) {
     ConfigurableApplicationContext context = SpringApplication.run(MigratorApp.class, args);
     ApplicationArguments appArgs = new DefaultApplicationArguments(args);
+    boolean retryMode = appArgs.containsOption(RUN_RETRY_MIGRATION);
     try {
       AutoDeployer autoDeployer = context.getBean(AutoDeployer.class);
       autoDeployer.deploy();
-
-      if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
-        migrateRuntime(context);
+      if (shouldRunFullMigration(appArgs)) {
+        LOGGER.info("Migrating both runtime and history");
+        migrateRuntime(context, retryMode);
+        migrateHistory(context, retryMode);
+      }
+      else if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
+        migrateRuntime(context, retryMode);
       } else if (appArgs.containsOption(RUN_HISTORY_MIGRATION)) {
-        migrateHistory(context);
+        migrateHistory(context, retryMode);
       } else {
-        LOGGER.info("Migrating both runtime and history.");
-        migrateRuntime(context);
-        migrateHistory(context);
+        LOGGER.warn("Invalid argument combination");
       }
     } finally {
       SpringApplication.exit(context);
     }
   }
 
-  public static void migrateRuntime(ConfigurableApplicationContext context) {
+  public static void migrateRuntime(ConfigurableApplicationContext context, boolean retryMode) {
     LOGGER.info("Migrating runtime data...");
     RuntimeMigrator runtimeMigrator = context.getBean(RuntimeMigrator.class);
+    runtimeMigrator.setRetryMode(retryMode);
     runtimeMigrator.migrate();
   }
 
-  public static void migrateHistory(ConfigurableApplicationContext context) {
+  public static void migrateHistory(ConfigurableApplicationContext context, boolean retryMode) {
+    if (retryMode) {
+      LOGGER.warn("Retrying history migration is not implemented yet, history migration will not be executed");
+      return;
+    }
     LOGGER.info("Migrating history data...");
     HistoryMigrator historyMigrator = context.getBean(HistoryMigrator.class);
     historyMigrator.migrate();
+  }
+
+  private static boolean shouldRunFullMigration(ApplicationArguments appArgs) {
+    // Return true either when both --runtime and --history are present or when neither is present
+    return (appArgs.containsOption(RUN_RUNTIME_MIGRATION) && appArgs.containsOption(RUN_HISTORY_MIGRATION)) ||
+        (!appArgs.containsOption(RUN_RUNTIME_MIGRATION) && !appArgs.containsOption(RUN_HISTORY_MIGRATION));
   }
 }

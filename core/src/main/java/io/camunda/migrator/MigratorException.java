@@ -5,20 +5,12 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.history;
+package io.camunda.migrator;
 
-import java.util.List;
+public class MigratorException extends RuntimeException {
 
-public interface IdKeyMapper {
-
-  String findLatestIdByType(String type);
-
-  Long findKeyById(String id);
-
-  void insert(IdKeyDbModel idKeyDbModel);
-
-  List<String> findSkippedProcessInstanceIds();
-
-  void updateKeyById(IdKeyDbModel idKeyDbModel);
+  public MigratorException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }
