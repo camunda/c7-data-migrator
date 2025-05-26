@@ -103,12 +103,12 @@ class MaxJobConfigurationTest extends RuntimeMigrationAbstractTest {
     io.camunda.zeebe.model.bpmn.BpmnModelInstance c8rootModel = io.camunda.zeebe.model.bpmn.Bpmn.createExecutableProcess(rootId)
         .startEvent("start_1")
         .zeebeEndExecutionListener("migrator")
-        .callActivity("call", c -> c.zeebeProcessId(level1Id))
+        .callActivity("ca_level_1", c -> c.zeebeProcessId(level1Id))
         .endEvent("end_1").done();
     io.camunda.zeebe.model.bpmn.BpmnModelInstance c8level1Model = io.camunda.zeebe.model.bpmn.Bpmn.createExecutableProcess(level1Id)
         .startEvent("start_2")
         .zeebeEndExecutionListener("migrator")
-        .callActivity("call_2", c -> c.zeebeProcessId(level2Id))
+        .callActivity("ca_level_2", c -> c.zeebeProcessId(level2Id))
         .endEvent("end_2").done();
     io.camunda.zeebe.model.bpmn.BpmnModelInstance c8level2Model = io.camunda.zeebe.model.bpmn.Bpmn.createExecutableProcess(level2Id)
         .startEvent("start_3")
