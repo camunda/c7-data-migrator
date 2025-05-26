@@ -167,11 +167,11 @@ public class RuntimeMigrator {
     idKeyMapper.updateKeyById(keyIdDbModel);
   }
 
-  private void executeMigratorJobs(List<ActivatedJob> migratorJobs) {
+  private void modifyProcessInstancePerJob(List<ActivatedJob> migratorJobs) {
     migratorJobs.forEach(activatedJob -> {
 
       String legacyId = (String) activatedJob.getVariable("legacyId");
-
+      LOGGER.debug("Modify process instance for job: " + activatedJob);
       ModifyProcessInstanceCommandStep1 modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(
               activatedJob.getProcessInstanceKey())
           // Cancel start event instance where migrator job sits to avoid executing the activities twice.
@@ -205,6 +205,7 @@ public class RuntimeMigrator {
     }
     modifyInstructions.send().join();
     // no need to complete the job since the modification canceled the migrator job in the start event
+      LOGGER.debug("Modify instructions send.");
     });
   }
 
@@ -224,7 +225,7 @@ public class RuntimeMigrator {
         LOGGER.debug("No more migrator jobs available.");
       } else {
         LOGGER.debug("Migrator jobs found: " + migratorJobs.size());
-        executeMigratorJobs(migratorJobs);
+        modifyProcessInstancePerJob(migratorJobs);
       }
     }
   }
