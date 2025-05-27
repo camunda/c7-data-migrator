@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:conversion="http://camunda.org/schema/conversion/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" conversion:converterVersion="0.12.4" exporter="Camunda Modeler" exporterVersion="5.31.0" expressionLanguage="http://www.w3.org/1999/XPath" id="Definitions_1vji0i0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0" targetNamespace="http://bpmn.io/schema/bpmn" typeLanguage="http://www.w3.org/2001/XMLSchema">
+  <bpmn:process id="ParallelGatewayProcess" isClosed="false" isExecutable="true" name="ParallelGatewayProcess" processType="None">
+    <bpmn:startEvent id="StartEvent_1" isInterrupting="true" parallelMultiple="false">
+      <bpmn:outgoing>Flow_0cq7mvn</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway gatewayDirection="Unspecified" id="gatewayActivity" name="gatewayActivity">
+      <bpmn:incoming>Flow_0cq7mvn</bpmn:incoming>
+      <bpmn:outgoing>Flow_114rjdq</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0jo3vbz</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task completionQuantity="1" id="noOpActivity" isForCompensation="false" name="noOpActivity" startQuantity="1">
+      <bpmn:incoming>Flow_114rjdq</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ebt1fw</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway gatewayDirection="Unspecified" id="mergingGatewayActivity" name="mergingGatewayActivity">
+      <bpmn:incoming>Flow_1ebt1fw</bpmn:incoming>
+      <bpmn:incoming>Flow_146vkmr</bpmn:incoming>
+      <bpmn:outgoing>Flow_0099xl0</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_0cq7mvn" sourceRef="StartEvent_1" targetRef="gatewayActivity"/>
+    <bpmn:sequenceFlow id="Flow_114rjdq" sourceRef="gatewayActivity" targetRef="noOpActivity"/>
+    <bpmn:sequenceFlow id="Flow_0jo3vbz" sourceRef="gatewayActivity" targetRef="usertaskActivity"/>
+    <bpmn:sequenceFlow id="Flow_1ebt1fw" sourceRef="noOpActivity" targetRef="mergingGatewayActivity"/>
+    <bpmn:sequenceFlow id="Flow_146vkmr" sourceRef="usertaskActivity" targetRef="mergingGatewayActivity"/>
+    <bpmn:endEvent id="Event_1nwat0j">
+      <bpmn:incoming>Flow_0099xl0</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0099xl0" sourceRef="mergingGatewayActivity" targetRef="Event_1nwat0j"/>
+    <bpmn:userTask completionQuantity="1" id="usertaskActivity" implementation="##unspecified" isForCompensation="false" name="usertaskActivity" startQuantity="1">
+      <bpmn:extensionElements>
+        <zeebe:userTask/>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0jo3vbz</bpmn:incoming>
+      <bpmn:outgoing>Flow_146vkmr</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane bpmnElement="ParallelGatewayProcess" id="BPMNPlane_1">
+      <bpmndi:BPMNShape bpmnElement="StartEvent_1" id="StartEvent_1_di">
+        <dc:Bounds height="36" width="36" x="182" y="162"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gatewayActivity" id="Gateway_0t6gx7m_di">
+        <dc:Bounds height="50" width="50" x="265" y="155"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="14" width="76" x="333" y="170"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="noOpActivity" id="Activity_0dyrw0j_di">
+        <dc:Bounds height="80" width="100" x="430" y="220"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mergingGatewayActivity" id="Gateway_1n59t4r_di">
+        <dc:Bounds height="50" width="50" x="625" y="165"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="27" width="84" x="530" y="180"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Event_1nwat0j" id="Event_1nwat0j_di">
+        <dc:Bounds height="36" width="36" x="772" y="172"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertaskActivity" id="Activity_1c2eq8o_di">
+        <dc:Bounds height="80" width="100" x="430" y="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0cq7mvn" id="Flow_0cq7mvn_di">
+        <di:waypoint x="218" y="180"/>
+        <di:waypoint x="265" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_114rjdq" id="Flow_114rjdq_di">
+        <di:waypoint x="290" y="205"/>
+        <di:waypoint x="290" y="260"/>
+        <di:waypoint x="430" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0jo3vbz" id="Flow_0jo3vbz_di">
+        <di:waypoint x="290" y="155"/>
+        <di:waypoint x="290" y="120"/>
+        <di:waypoint x="430" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_1ebt1fw" id="Flow_1ebt1fw_di">
+        <di:waypoint x="530" y="260"/>
+        <di:waypoint x="650" y="260"/>
+        <di:waypoint x="650" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_146vkmr" id="Flow_146vkmr_di">
+        <di:waypoint x="530" y="120"/>
+        <di:waypoint x="650" y="120"/>
+        <di:waypoint x="650" y="165"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0099xl0" id="Flow_0099xl0_di">
+        <di:waypoint x="675" y="190"/>
+        <di:waypoint x="772" y="190"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -54,4 +54,26 @@ public class GatewayMigrationTests extends RuntimeMigrationAbstractTest {
         .hasActiveElements(byId("eventGatewayElementId"))
         .hasVariable(LEGACY_ID_VAR_NAME, instance.getProcessInstanceId());
   }
+  
+  @Test
+  public void migrateParallelGatewayActivityInstance() {
+    // given
+    String PROCESS_DEFINITION_ID = "ParallelGatewayProcess";
+    deployProcessInC7AndC8("parallelGateway.bpmn");
+
+    ProcessInstance instance = runtimeService.startProcessInstanceByKey("ParallelGatewayProcess");
+
+    // when
+    runtimeMigrator.migrate();
+
+    // then
+    assertThat(byProcessId(PROCESS_DEFINITION_ID)).isActive()
+        .hasActiveElements(byId("usertaskActivity"))
+        .hasVariable(LEGACY_ID_VAR_NAME, instance.getProcessInstanceId());
+    assertThat(byProcessId(PROCESS_DEFINITION_ID)).hasCompletedElement("noOpActivity", 1)
+        .hasVariable(LEGACY_ID_VAR_NAME, instance.getProcessInstanceId());
+
+    assertThat(byProcessId(PROCESS_DEFINITION_ID)).hasNoActiveElements(byId("mergingGatewayActivity"));
+    assertThat(byProcessId(PROCESS_DEFINITION_ID)).hasActiveElementsExactly (byId("usertaskActivity"));
+  }
 }
