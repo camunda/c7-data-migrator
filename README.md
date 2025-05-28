@@ -36,6 +36,21 @@
    1. Or by building, extracting and running [the distribution](./assembly)
 
 
+## BPMN element migration FAQ
+### eventBasedGateway
+When migrating an `eventBasedGateway` from C7 to C8, the following additional changes are required:
+- In C8 a `zeebe:subscription` inside an `extensionElements` is required for the `message` element.  This subscription must include a `correlationKey` property.
+- The `correlationKey` has to reference an existing variable by name. For example:
+```
+  <bpmn:message id="Message_3qpc6ol" name="Message_3qpc6ol">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=catchEvent1CorrelationVariable" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+```
+where `catchEvent1CorrelationVariable` must be a variable that exists when a token reaches the `eventBasedGateway`.
+
+
 ## Contributing
 
 Read the [Contributions Guide](https://github.com/camunda/camunda-bpm-platform/blob/master/CONTRIBUTING.md).
