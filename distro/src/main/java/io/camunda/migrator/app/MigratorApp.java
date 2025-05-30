@@ -68,9 +68,8 @@ public class MigratorApp {
     historyMigrator.migrate();
   }
 
-  private static boolean shouldRunFullMigration(ApplicationArguments appArgs) {
-    // Return true either when both --runtime and --history are present or when neither is present
-    return (appArgs.containsOption(RUN_RUNTIME_MIGRATION) && appArgs.containsOption(RUN_HISTORY_MIGRATION)) ||
-        (!appArgs.containsOption(RUN_RUNTIME_MIGRATION) && !appArgs.containsOption(RUN_HISTORY_MIGRATION));
+  protected static boolean shouldRunFullMigration(ApplicationArguments appArgs) {
+    // Return true either when both --runtime and --history are present
+    return appArgs.containsOption(RUN_RUNTIME_MIGRATION) && appArgs.containsOption(RUN_HISTORY_MIGRATION);
   }
 }
