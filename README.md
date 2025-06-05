@@ -19,6 +19,9 @@
 - Message events:
   - only message catch and throw events are supported for migration
   - depending on your implementation, you may need to add [a correlation variable](https://docs.camunda.io/docs/components/modeler/bpmn/message-events/#messages) to the instance pre migration
+- Message and Signal start events:
+  - If your process starts with a message/signal start event, no token exists until the message/signal is received and hence no migration is possible until that moment
+  - Once the message/signal is received, the token is created and moved down the execution flow and may be waiting at a migratable element inside the process. However, due to how the migration logic is implemented, at the moment the data migrator only supports processes that start with a normal start event. This is to be addressed with [this ticket](https://github.com/camunda/camunda-bpm-platform/issues/5195)
 - Triggered Boundary events:
   - C7 boundary events do not have a natural wait state
   - If the process instance to be migrated is currently at a triggered boundary event in Camunda 7, there may still be a job associated with that event, either waiting to be executed or currently running. In this state, the token is considered to be at the element where the job is created: typically the first activity of the boundary event’s handler flow, or technically the point after the boundary event if asyncAfter is used.

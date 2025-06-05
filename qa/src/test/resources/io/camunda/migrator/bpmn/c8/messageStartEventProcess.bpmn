@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:conversion="http://camunda.org/schema/conversion/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" conversion:converterVersion="0.12.4" exporter="Camunda Modeler" exporterVersion="5.24.0" expressionLanguage="http://www.w3.org/1999/XPath" id="Definitions_1tmeq3c" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0" targetNamespace="http://bpmn.io/schema/bpmn" typeLanguage="http://www.w3.org/2001/XMLSchema">
+  <bpmn:process id="MessageStartEventProcessId" isClosed="false" isExecutable="true" name="MessageStartEventProcess" processType="None">
+    <bpmn:extensionElements>
+      <conversion:message severity="INFO">Unused attribute 'historyTimeToLive' on 'process' is removed.</conversion:message>
+    </bpmn:extensionElements>
+    <bpmn:sequenceFlow id="Flow_1hpxz6b" sourceRef="MessageStartEventId" targetRef="Activity_088ub3b"/>
+    <bpmn:endEvent id="Event_1s06k8s">
+      <bpmn:incoming>Flow_0yxhkfo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0yxhkfo" sourceRef="Activity_088ub3b" targetRef="Event_1s06k8s"/>
+    <bpmn:userTask completionQuantity="1" id="Activity_088ub3b" implementation="##unspecified" isForCompensation="false" startQuantity="1">
+      <bpmn:extensionElements>
+        <zeebe:userTask/>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hpxz6b</bpmn:incoming>
+      <bpmn:outgoing>Flow_0yxhkfo</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:startEvent id="MessageStartEventId" isInterrupting="true" name="MessageStartEvent" parallelMultiple="false">
+      <bpmn:extensionElements>
+        <conversion:reference>Message_3gqstme</conversion:reference>
+        <zeebe:executionListeners>
+          <zeebe:executionListener eventType="end" type="migrator" />
+        </zeebe:executionListeners>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_1hpxz6b</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1s43wa8" messageRef="Message_3gqstme"/>
+    </bpmn:startEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_3gqstme" name="msgRef">
+    <bpmn:extensionElements>
+      <conversion:message severity="TASK">Please define a correlation key if the message is used in a message catch event.</conversion:message>
+      <conversion:referencedBy>MessageStartEventId</conversion:referencedBy>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane bpmnElement="MessageStartEventProcessId" id="BPMNPlane_1">
+      <bpmndi:BPMNShape bpmnElement="Event_1s06k8s" id="Event_1s06k8s_di">
+        <dc:Bounds height="36" width="36" x="432" y="99"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Activity_088ub3b" id="Activity_0611i7v_di">
+        <dc:Bounds height="80" width="100" x="270" y="77"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="MessageStartEventId" id="Event_17i782p_di">
+        <dc:Bounds height="36" width="36" x="179" y="99"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="27" width="87" x="154" y="142"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0yxhkfo" id="Flow_0yxhkfo_di">
+        <di:waypoint x="370" y="117"/>
+        <di:waypoint x="432" y="117"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_1hpxz6b" id="Flow_1hpxz6b_di">
+        <di:waypoint x="215" y="117"/>
+        <di:waypoint x="270" y="117"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
