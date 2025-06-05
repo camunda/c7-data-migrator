@@ -15,7 +15,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureTrue;
 
 import io.camunda.client.api.search.response.ProcessInstance;
-import io.camunda.migrator.history.IdKeyMapper;
+import io.camunda.migrator.persistence.IdKeyDbModel;
+import io.camunda.migrator.persistence.IdKeyMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -55,9 +56,9 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     // then the instance was not migrated and marked as skipped
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
     assertThat(processInstances.size()).isEqualTo(0);
-    List<String> skippedProcessInstanceIds = idKeyMapper.findSkippedProcessInstanceIds().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
-    assertThat(skippedProcessInstanceIds.getFirst()).isEqualTo(process.getId());
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
   }
 
   @Test
@@ -75,9 +76,9 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     // then the instance was not migrated and marked as skipped
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
     assertThat(processInstances.size()).isEqualTo(0);
-    List<String> skippedProcessInstanceIds = idKeyMapper.findSkippedProcessInstanceIds().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
-    assertThat(skippedProcessInstanceIds.getFirst()).isEqualTo(process.getId());
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
   }
 
   @Test
@@ -86,7 +87,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     deployCamunda7Process("io/camunda/migrator/bpmn/c7/multiInstanceProcess.bpmn");
     var process = runtimeService.startProcessInstanceByKey("multiInstanceProcess");
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkippedProcessInstanceIds().size() == 1);
+    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkipped().size() == 1);
 
     // when running retrying runtime migration
     runtimeMigrator.setMode(RETRY_SKIPPED);
@@ -95,9 +96,9 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     // then the instance was not migrated and still marked as skipped
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
     assertThat(processInstances.size()).isEqualTo(0);
-    List<String> skippedProcessInstanceIds = idKeyMapper.findSkippedProcessInstanceIds().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
-    assertThat(skippedProcessInstanceIds.getFirst()).isEqualTo(process.getId());
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
   }
 
   @Test
@@ -106,7 +107,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     deployProcessInC7AndC8("multiInstanceProcess.bpmn");
     var process = runtimeService.startProcessInstanceByKey("multiInstanceProcess");
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkippedProcessInstanceIds().size() == 1);
+    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkipped().size() == 1);
 
     // and given the process state changed after skipping and is now eligible for migration
     for(Task task : taskService.createTaskQuery().taskDefinitionKey("multiUserTask").list()) {
@@ -133,8 +134,8 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     // given skipped process instance
     deployProcessInC7AndC8("multiInstanceProcess.bpmn");
     var process = runtimeService.startProcessInstanceByKey("multiInstanceProcess");
-    runtimeMigrator.start();
-    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkippedProcessInstanceIds().size() == 1);
+    runtimeMigrator.migrate();
+    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkipped().size() == 1);
 
     runtimeService.deleteProcessInstance(process.getId(), "State cannot be fixed!");
 
@@ -156,7 +157,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
       processInstancesIds.add(runtimeService.startProcessInstanceByKey("multiInstanceProcess").getProcessInstanceId());
     }
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: 10 process instances should be skipped", idKeyMapper.findSkippedProcessInstanceIdsCount() == 10);
+    ensureTrue("Unexpected state: 10 process instances should be skipped", idKeyMapper.findSkippedCount() == 10);
     // when running migration with list skipped mode
     runtimeMigrator.setMode(LIST_SKIPPED);
     runtimeMigrator.start();
@@ -171,7 +172,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     processInstancesIds.forEach(processInstanceId -> assertThat(capturedIds).contains(processInstanceId));
 
     // and skipped instances were not migrated
-    assertThat(idKeyMapper.findSkippedProcessInstanceIdsCount()).isEqualTo(10);
+    assertThat(idKeyMapper.findSkippedCount()).isEqualTo(10);
   }
 
   @Test
@@ -186,7 +187,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     assertThat(output.getOut()).endsWith(NO_SKIPPED_INSTANCES_MESSAGE + "\n");
 
     // and no migration was done
-    assertThat(idKeyMapper.findAllProcessInstanceIds().size()).isEqualTo(0);
+    assertThat(idKeyMapper.findAllIds().size()).isEqualTo(0);
   }
 
 }

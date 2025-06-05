@@ -10,24 +10,25 @@ package io.camunda.migrator;
 import static io.camunda.migrator.ExceptionUtils.callApi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.camunda.bpm.engine.query.Query;
+import org.camunda.bpm.engine.runtime.VariableInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Pagination<T> {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(Pagination.class);
 
   protected int batchSize;
   protected Supplier<Long> maxCount;
-  protected Function<Integer, Set<T>> page;
+  protected Function<Integer, List<T>> page;
   private Query<?, T> query;
 
   public Pagination<T> batchSize(int batchSize) {
@@ -40,7 +41,7 @@ public class Pagination<T> {
     return this;
   }
 
-  public Pagination<T> page(Function<Integer, Set<T>> page) {
+  public Pagination<T> page(Function<Integer, List<T>> page) {
     this.page = page;
     return this;
   }
@@ -86,5 +87,4 @@ public class Pagination<T> {
                                 Function<? super T, ? extends U> valueMapper) {
     return toList().stream().collect(Collectors.toMap(keyMapper, valueMapper));
   }
-
 }

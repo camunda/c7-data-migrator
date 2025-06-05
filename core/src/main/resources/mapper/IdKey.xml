@@ -7,34 +7,35 @@
   ~ except in compliance with the Camunda License 1.0.
   -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="io.camunda.migrator.history.IdKeyMapper">
+<mapper namespace="io.camunda.migrator.persistence.IdKeyMapper">
 
-  <select id="findSkippedProcessInstanceIdsCount" resultType="long">
+  <select id="findSkippedCount" resultType="long">
     SELECT COUNT(ID) FROM (
-      <include refid="findSkippedProcessInstanceIdsByQueryCriteriaSql"/>
+      <include refid="findSkippedByQueryCriteriaSql"/>
     )
   </select>
 
-  <select id="findSkippedProcessInstanceIds">
-    <include refid="findSkippedProcessInstanceIdsByQueryCriteriaSql"/>
+  <select id="findSkipped" resultType="io.camunda.migrator.persistence.IdKeyDbModel">
+    <include refid="findSkippedByQueryCriteriaSql"/>
   </select>
 
-  <sql id="findSkippedProcessInstanceIdsByQueryCriteriaSql">
-    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE' AND `KEY` IS NULL
+  <sql id="findSkippedByQueryCriteriaSql">
+    SELECT ID, `KEY`, START_DATE, TYPE FROM ${prefix}MIGRATION_MAPPING
+    WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE' AND `KEY` IS NULL
     <if test="limit != null &amp;&amp; offset != null">
       LIMIT #{limit, jdbcType=BIGINT}
       OFFSET #{offset, jdbcType=BIGINT}
     </if>
   </sql>
 
-  <select id="findAllProcessInstanceIds">
+  <select id="findAllIds">
     SELECT ID
     FROM ${prefix}MIGRATION_MAPPING
     WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE'
     ORDER BY ID
   </select>
 
-  <update id="updateKeyById" parameterType="io.camunda.migrator.history.IdKeyDbModel">
+  <update id="updateKeyById" parameterType="io.camunda.migrator.persistence.IdKeyDbModel">
     UPDATE ${prefix}MIGRATION_MAPPING
     SET `KEY` = #{key, jdbcType=BIGINT}
     WHERE ID = #{id, jdbcType=VARCHAR}
@@ -44,16 +45,26 @@
     SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = '${type}' ORDER BY ID DESC LIMIT 1
   </select>
 
+  <select id="checkExists" resultType="boolean" parameterType="java.lang.String">
+    SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+    FROM ${prefix}MIGRATION_MAPPING
+    WHERE ID = #{id, jdbcType=VARCHAR}
+  </select>
+
+  <select id="findLatestStartDateByType" parameterType="java.lang.String">
+    SELECT START_DATE FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = '${type}' ORDER BY START_DATE DESC LIMIT 1
+  </select>
+
   <select id="findKeyById" parameterType="java.lang.String">
     SELECT `KEY` FROM ${prefix}MIGRATION_MAPPING WHERE ID = '${id}' LIMIT 1
   </select>
 
   <insert
     id="insert"
-    parameterType="io.camunda.migrator.history.IdKeyDbModel"
+    parameterType="io.camunda.migrator.persistence.IdKeyDbModel"
     flushCache="true">
-    INSERT INTO ${prefix}MIGRATION_MAPPING (ID, `KEY`, TYPE)
-    VALUES (#{id, jdbcType=VARCHAR}, #{key, jdbcType=BIGINT}, #{type, jdbcType=VARCHAR})
+    INSERT INTO ${prefix}MIGRATION_MAPPING (ID, `KEY`, START_DATE, TYPE)
+    VALUES (#{id, jdbcType=VARCHAR}, #{key, jdbcType=BIGINT}, #{startDate, jdbcType=TIMESTAMP}, #{type, jdbcType=VARCHAR})
   </insert>
 
   <delete id="delete">

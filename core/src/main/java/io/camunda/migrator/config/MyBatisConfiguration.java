@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 
-import io.camunda.migrator.history.IdKeyMapper;
+import io.camunda.migrator.persistence.IdKeyMapper;
 import liquibase.integration.spring.MultiTenantSpringLiquibase;
 import liquibase.integration.spring.SpringLiquibase;
 import org.apache.commons.lang3.StringUtils;
