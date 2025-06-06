@@ -20,11 +20,8 @@
   </select>
 
   <sql id="findSkippedProcessInstanceIdsByQueryCriteriaSql">
-    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE' AND `KEY` IS NULL
-    <if test="limit != null &amp;&amp; offset != null">
-      LIMIT #{limit, jdbcType=BIGINT}
-      OFFSET #{offset, jdbcType=BIGINT}
-    </if>
+    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE' AND ITEM_KEY IS NULL
+    <include refid="io.camunda.migrator.Commons.pageSql"/>
   </sql>
 
   <select id="findAllProcessInstanceIds">
@@ -36,29 +33,30 @@
 
   <update id="updateKeyById" parameterType="io.camunda.migrator.history.IdKeyDbModel">
     UPDATE ${prefix}MIGRATION_MAPPING
-    SET `KEY` = #{key, jdbcType=BIGINT}
+    SET ITEM_KEY = #{itemKey, jdbcType=BIGINT}
     WHERE ID = #{id, jdbcType=VARCHAR}
   </update>
 
   <select id="findLatestIdByType" parameterType="java.lang.String">
-    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = '${type}' ORDER BY ID DESC LIMIT 1
+    SELECT ID FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = '${type}' ORDER BY ID DESC
+    <include refid="io.camunda.migrator.Commons.singlePageSql"/>
   </select>
 
   <select id="findKeyById" parameterType="java.lang.String">
-    SELECT `KEY` FROM ${prefix}MIGRATION_MAPPING WHERE ID = '${id}' LIMIT 1
+    SELECT ITEM_KEY FROM ${prefix}MIGRATION_MAPPING WHERE ID = #{id}
   </select>
 
   <insert
     id="insert"
     parameterType="io.camunda.migrator.history.IdKeyDbModel"
     flushCache="true">
-    INSERT INTO ${prefix}MIGRATION_MAPPING (ID, `KEY`, TYPE)
-    VALUES (#{id, jdbcType=VARCHAR}, #{key, jdbcType=BIGINT}, #{type, jdbcType=VARCHAR})
+    INSERT INTO ${prefix}MIGRATION_MAPPING (ID, ITEM_KEY, TYPE)
+    VALUES (#{id, jdbcType=VARCHAR}, #{itemKey, jdbcType=BIGINT}, #{type, jdbcType=VARCHAR})
   </insert>
 
   <delete id="delete">
     DELETE FROM ${prefix}MIGRATION_MAPPING
-    WHERE ID = '${id}'
+    WHERE ID = #{id}
   </delete>
 
 </mapper>

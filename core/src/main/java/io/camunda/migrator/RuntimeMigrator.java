@@ -131,7 +131,7 @@ public class RuntimeMigrator {
   protected void storeMapping(String legacyProcessInstanceId, Long processInstanceKey) {
     var keyIdDbModel = new IdKeyDbModel();
     keyIdDbModel.setId(legacyProcessInstanceId);
-    keyIdDbModel.setKey(processInstanceKey);
+    keyIdDbModel.setItemKey(processInstanceKey);
     keyIdDbModel.setType(TYPE.RUNTIME_PROCESS_INSTANCE);
 
     if (retryMode) {

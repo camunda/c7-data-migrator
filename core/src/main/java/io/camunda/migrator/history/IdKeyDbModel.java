@@ -11,12 +11,12 @@ import java.util.Objects;
 
 public class IdKeyDbModel {
 
-  protected Long key;
+  protected Long itemKey;
   protected String id;
   protected IdKeyMapper.TYPE type;
 
-  public Long key() {
-    return key;
+  public Long itemKey() {
+    return itemKey;
   }
 
   public String id() {
@@ -27,8 +27,8 @@ public class IdKeyDbModel {
     return type;
   }
 
-  public void setKey(Long key) {
-    this.key = key;
+  public void setItemKey(Long itemKey) {
+    this.itemKey = itemKey;
   }
 
   public void setId(String id) {
@@ -46,17 +46,17 @@ public class IdKeyDbModel {
     if (obj == null || obj.getClass() != this.getClass())
       return false;
     var that = (IdKeyDbModel) obj;
-    return Objects.equals(this.key, that.key) && Objects.equals(this.id, that.id) && Objects.equals(this.type, that.type);
+    return Objects.equals(this.itemKey, that.itemKey) && Objects.equals(this.id, that.id) && Objects.equals(this.type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(key, id, type);
+    return Objects.hash(itemKey, id, type);
   }
 
   @Override
   public String toString() {
-    return "IdKey[" + "key=" + key + ", " + "id=" + id + ", " + "type=" + type + ']';
+    return "IdKey[" + "itemKey=" + itemKey + ", " + "id=" + id + ", " + "type=" + type + ']';
   }
 
 }

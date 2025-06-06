@@ -27,6 +27,8 @@
     <version.spring-boot>3.4.4</version.spring-boot>
     <version.junit.jupiter>5.11.4</version.junit.jupiter>
     <version.java>21</version.java>
+    <version.h2>2.3.232</version.h2>
+    <version.postgresql>42.5.5</version.postgresql>
     <plugin.version.compiler>3.14.0</plugin.version.compiler>
     <plugin.version.nexus-staging>1.6.14</plugin.version.nexus-staging>
 

@@ -106,7 +106,15 @@ public class MyBatisConfiguration {
     LOGGER.info("Detected databaseId: {}", databaseId);
 
     final Properties properties = new Properties();
-    final var file = "db/vendor-properties/" + databaseId + ".properties";
+    final var migratorFile = "db/properties/" + databaseId + ".properties";
+    final var c8File = "db/vendor-properties/" + databaseId + ".properties";
+    loadPropertiesFile(databaseId, properties, c8File);
+    loadPropertiesFile(databaseId, properties, migratorFile);
+
+    return new VendorDatabaseProperties(properties);
+  }
+
+  private void loadPropertiesFile(String databaseId, Properties properties, String file) throws IOException {
     try (final var propertiesInputStream = getClass().getClassLoader().getResourceAsStream(file)) {
       if (propertiesInputStream != null) {
         properties.load(propertiesInputStream);
@@ -115,8 +123,6 @@ public class MyBatisConfiguration {
             "No vendor properties found for databaseId " + databaseId);
       }
     }
-
-    return new VendorDatabaseProperties(properties);
   }
 
   @Bean

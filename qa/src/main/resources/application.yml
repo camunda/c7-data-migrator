@@ -4,3 +4,7 @@ migrator:
 
 logging:
   level.io.camunda.migrator: DEBUG
+
+camunda:
+  database:
+    database-vendor-id: h2

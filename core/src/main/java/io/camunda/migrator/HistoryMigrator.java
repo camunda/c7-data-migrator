@@ -358,7 +358,7 @@ public class HistoryMigrator {
   protected void insertKeyIdMapping(String id, Long key, IdKeyMapper.TYPE type) {
     var idKeyDbModel = new IdKeyDbModel();
     idKeyDbModel.setId(id);
-    idKeyDbModel.setKey(key);
+    idKeyDbModel.setItemKey(key);
     idKeyDbModel.setType(type);
     idKeyMapper.insert(idKeyDbModel);
   }

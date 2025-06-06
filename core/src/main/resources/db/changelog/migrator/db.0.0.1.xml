@@ -17,12 +17,12 @@
       <column name="ID" type="VARCHAR(64)">
         <constraints primaryKey="true"/>
       </column>
-      <column name="KEY" type="BIGINT" />
+      <column name="ITEM_KEY" type="BIGINT" />
       <column name="TYPE" type="VARCHAR(255)" />
     </createTable>
 
     <createIndex tableName="${prefix}MIGRATION_MAPPING" indexName="${prefix}IDX_MIGRATION_MAPPING_ID">
-      <column name="KEY" />
+      <column name="ITEM_KEY" />
     </createIndex>
   </changeSet>
 

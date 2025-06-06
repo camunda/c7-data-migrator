@@ -1,1 +1,4 @@
 migrator.c7.auto-ddl: true
+camunda:
+  database:
+    database-vendor-id: h2
