@@ -20,7 +20,7 @@ if "%argCount%" GTR "3" (
 )
 
 for %%A in (%*) do (
-  if /I not "%%~A"=="--runtime" if /I not "%%~A"=="--history" if /I not "%%~A"=="--retry" (
+  if /I not "%%~A"=="--runtime" if /I not "%%~A"=="--history" if /I not "%%~A"=="--list-skipped" if /I not "%%~A"=="--retry-skipped" (
     echo Invalid flag: %%A
     goto :print_usage
   )
@@ -40,11 +40,12 @@ goto :end
 
 :print_usage
 echo.
-echo Usage: start.bat [--runtime] [--history] [--retry]
+echo Usage: start.bat [--runtime] [--history] [--list-skipped|--retry-skipped]
 echo Options:
-echo   --runtime     - Migrate runtime data only
-echo   --history     - Migrate history data only
-echo   --retry       - Retry only previously skipped data
+echo   --runtime          - Migrate runtime data only
+echo   --history          - Migrate history data only
+echo   --list-skipped     - List previously skipped data
+echo   --retry-skipped    - Retry only previously skipped data
 exit /b 1
 
 :end

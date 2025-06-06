@@ -39,7 +39,7 @@ public class GatewayMigrationTests extends RuntimeMigrationAbstractTest {
     ProcessInstance instance = runtimeService.startProcessInstanceByKey("eventGatewayProcessId", variables);
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(byProcessId("eventGatewayProcessId")).isActive()
@@ -62,7 +62,7 @@ public class GatewayMigrationTests extends RuntimeMigrationAbstractTest {
     ProcessInstance instance = runtimeService.startProcessInstanceByKey("ParallelGatewayProcess");
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(byProcessId("ParallelGatewayProcess")).isActive()

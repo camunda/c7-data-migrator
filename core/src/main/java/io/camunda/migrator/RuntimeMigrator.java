@@ -8,6 +8,9 @@
 package io.camunda.migrator;
 
 import static io.camunda.migrator.ExceptionUtils.callApi;
+import static io.camunda.migrator.MigratorMode.LIST_SKIPPED;
+import static io.camunda.migrator.MigratorMode.MIGRATE;
+import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
 import static io.camunda.migrator.history.IdKeyMapper.TYPE;
 
 import io.camunda.client.CamundaClient;
@@ -47,7 +50,6 @@ import java.util.Map;
 public class RuntimeMigrator {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
-
   public final static int DEFAULT_BATCH_SIZE = 500;
 
   @Autowired
@@ -65,14 +67,21 @@ public class RuntimeMigrator {
   @Value("${migrator.batch-size:" + DEFAULT_BATCH_SIZE + "}")
   protected int batchSize;
 
-  protected boolean retryMode = false;
+  protected MigratorMode mode = MIGRATE;
 
-  public void migrate() {
+  public void start() {
+    if (LIST_SKIPPED.equals(mode)) {
+      PrintUtils.printSkippedInstances(listSkippedProcessInstances());
+    } else {
+      migrate();
+    }
+  }
+
+  protected void migrate() {
     fetchProcessInstancesToMigrate(legacyProcessInstanceId -> {
       if (skipProcessInstance(legacyProcessInstanceId)) {
         LOGGER.info("Skipping process instance with legacyId: {}", legacyProcessInstanceId);
         storeMapping(legacyProcessInstanceId, null);
-
       } else {
         LOGGER.debug("Starting new C8 process instance with legacyId: [{}]", legacyProcessInstanceId);
         Long processInstanceKey = startNewProcessInstance(legacyProcessInstanceId);
@@ -84,6 +93,14 @@ public class RuntimeMigrator {
     });
 
     activateMigratorJobs();
+  }
+
+  protected List<String> listSkippedProcessInstances() {
+   return new Pagination<String>()
+        .batchSize(batchSize)
+        .maxCount(idKeyMapper::findSkippedProcessInstanceIdsCount)
+        .page(offset -> idKeyMapper.findSkippedProcessInstanceIds(0, batchSize))
+        .toList();
   }
 
   protected boolean skipProcessInstance(String legacyProcessInstanceId) {
@@ -99,7 +116,7 @@ public class RuntimeMigrator {
 
   protected void fetchProcessInstancesToMigrate(Consumer<String> storeMappingConsumer) {
     LOGGER.info("Fetching process instances to migrate");
-    if (retryMode) {
+    if (RETRY_SKIPPED.equals(mode)) {
       new Pagination<String>()
           .batchSize(batchSize)
           .maxCount(idKeyMapper::findSkippedProcessInstanceIdsCount)
@@ -134,7 +151,7 @@ public class RuntimeMigrator {
     keyIdDbModel.setKey(processInstanceKey);
     keyIdDbModel.setType(TYPE.RUNTIME_PROCESS_INSTANCE);
 
-    if (retryMode) {
+    if (RETRY_SKIPPED.equals(mode)) {
       LOGGER.debug("Updating key for legacyId [{}] with value [{}]", legacyProcessInstanceId, processInstanceKey);
       callApi(() -> idKeyMapper.updateKeyById(keyIdDbModel));
     } else {
@@ -294,8 +311,8 @@ public class RuntimeMigrator {
   public record FlowNode(String activityId, String subProcessInstanceId) {
   }
 
-  public void setRetryMode(boolean retryMode) {
-    this.retryMode = retryMode;
+  public void setMode(MigratorMode mode) {
+    this.mode = mode;
   }
 
 }

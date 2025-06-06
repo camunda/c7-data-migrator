@@ -44,7 +44,7 @@ public class TaskMigrationTest extends AbstractElementMigrationTest {
     runtimeService.startProcessInstanceByKey("userTaskProcessId");
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(byTaskName("UserTaskName")).isCreated().hasElementId("userTaskId");
@@ -64,7 +64,7 @@ public class TaskMigrationTest extends AbstractElementMigrationTest {
     ensureTrue("Unexpected process state: userTask2 should be 'created'", "created".equalsIgnoreCase(task2.getTaskState()));
 
     // when running runtime migration
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then there is one expected process instance
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();

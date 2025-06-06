@@ -35,7 +35,7 @@ public abstract class AbstractElementMigrationTest extends RuntimeMigrationAbstr
     ProcessInstance instance = runtimeService.startProcessInstanceByKey(processId);
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(byProcessId(processId)).isActive()
@@ -54,7 +54,7 @@ public abstract class AbstractElementMigrationTest extends RuntimeMigrationAbstr
     ProcessInstance instance = runtimeService.startProcessInstanceByKey(processId);
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(byProcessId(processId)).hasCompletedElement(elementId, 1)

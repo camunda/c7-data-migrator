@@ -7,6 +7,8 @@
  */
 package io.camunda.migrator.qa;
 
+import static io.camunda.migrator.MigratorMode.MIGRATE;
+
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.response.DeploymentEvent;
 import io.camunda.client.api.search.response.ProcessInstance;
@@ -65,7 +67,7 @@ public abstract class RuntimeMigrationAbstractTest {
     idKeyMapper.findAllProcessInstanceIds().forEach(id -> idKeyMapper.delete(id));
 
     // reset runtime migrator
-    runtimeMigrator.setRetryMode(false);
+    runtimeMigrator.setMode(MIGRATE);
     runtimeMigrator.setBatchSize(RuntimeMigrator.DEFAULT_BATCH_SIZE);
   }
 

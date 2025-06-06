@@ -36,7 +36,7 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
     assertThat(runtimeService.createProcessInstanceQuery().list().size()).isEqualTo(5);
 
     // when running runtime migration
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
@@ -60,7 +60,7 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
     }
 
     // when running runtime migration
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
@@ -81,7 +81,7 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
     runtimeService.startProcessInstanceByKey("root");
 
     // when running runtime migration
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();

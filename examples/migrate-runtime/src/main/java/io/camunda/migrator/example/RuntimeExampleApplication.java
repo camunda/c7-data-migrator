@@ -19,7 +19,7 @@ public class RuntimeExampleApplication {
 
     try {
       RuntimeMigrator runtimeMigrator = context.getBean(RuntimeMigrator.class);
-      runtimeMigrator.migrate();
+      runtimeMigrator.start();
     } finally {
       SpringApplication.exit(context);
     }

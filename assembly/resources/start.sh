@@ -8,11 +8,12 @@ JAR_PATH="$BASEDIR/internal/c7-data-migrator.jar"
 COMMON_OPTS="-Dloader.path=$classPath -Dmigrator.deployment-dir=$DEPLOYMENT_DIR -Dspring.config.location=file:$CONFIGURATION"
 
 print_usage() {
-  echo "Usage: start.sh [--runtime] [--history] [--retry]"
+  echo "Usage: start.sh [--runtime] [--history] [--list-skipped|--retry-skipped]"
   echo "Options:"
-  echo "  --runtime     - Migrate runtime data only"
-  echo "  --history     - Migrate history data only"
-  echo "  --retry       - Retry only previously skipped data"
+  echo "  --runtime         - Migrate runtime data only"
+  echo "  --history         - Migrate history data only"
+  echo "  --list-skipped    - List previously skipped data"
+  echo "  --retry-skipped   - Retry only previously skipped data"
 }
 
 if [[ $# -gt 3 ]]; then
@@ -23,7 +24,7 @@ fi
 
 for arg in "$@"; do
   case "$arg" in
-    --runtime|--history|--retry)
+    --runtime|--history|--list-skipped|--retry-skipped)
       ;;
     *)
       echo "Invalid flag: $arg"

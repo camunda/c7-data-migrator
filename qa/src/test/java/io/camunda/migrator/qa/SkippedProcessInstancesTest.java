@@ -7,6 +7,7 @@
  */
 package io.camunda.migrator.qa;
 
+import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import io.camunda.client.api.search.response.SearchResponsePage;
@@ -37,7 +38,7 @@ class SkippedProcessInstancesTest extends RuntimeMigrationAbstractTest {
     }
 
     runtimeMigrator.setBatchSize(4);
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     Supplier<SearchResponsePage> response = () -> camundaClient.newProcessInstanceSearchRequest().send().join().page();
 
@@ -55,10 +56,10 @@ class SkippedProcessInstancesTest extends RuntimeMigrationAbstractTest {
               .map(Task::getId).forEach(taskService::complete);
         });
 
-    runtimeMigrator.setRetryMode(true);
+    runtimeMigrator.setMode(RETRY_SKIPPED);
 
     // when
-    runtimeMigrator.migrate();
+    runtimeMigrator.start();
 
     // then
     assertThat(response.get().totalItems()).isEqualTo(22*2);
