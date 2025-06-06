@@ -25,6 +25,14 @@
   - During migration to Camunda 8, the token will be mapped to the corresponding target element. However, if that element expects input data that is normally produced by the boundary event’s job (e.g. setting variables), this data may be missing in the migrated instance.
   - Recommendation: To ensure a consistent migration, allow boundary event executions to complete before initiating the migration.
 - There are elements that are supported in C7 but not supported in C8. Please refer to the [documentation](https://docs.camunda.io/docs/next/components/modeler/bpmn/bpmn-coverage/) for more details on element support in C8 and adjust your models accordingly before migration.
+- Call Activity
+   - To migrate a subprocess that is started from a call activity, the migrator must set the `legacyId` variable for the subprocess. This requires propagating the parent variables. This can be achieved by updating the C8 call activity in one of the following ways:  
+     - Set `propagateAllParentVariables` to `true` (this is the default) in the `zeebe:calledElement` extension element.  
+     - Or, if `propagateAllParentVariables` is set to `false`, provide an explicit input mapping:  
+   ```xml
+   <zeebe:ioMapping>
+     <zeebe:input source="=legacyId" target="legacyId" />
+   </zeebe:ioMapping>
 
 #### Configuration
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:conversion="http://camunda.org/schema/conversion/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" conversion:converterVersion="0.12.4" exporter="Camunda Modeler" exporterVersion="5.31.0" expressionLanguage="http://www.w3.org/1999/XPath" id="Definitions_1702nt1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0" targetNamespace="http://bpmn.io/schema/bpmn" typeLanguage="http://www.w3.org/2001/XMLSchema">
+  <bpmn:process id="calledProcessInstanceId" isClosed="false" isExecutable="true" name="calledProcessInstanceName" processType="None">
+    <bpmn:extensionElements>
+      <conversion:message severity="INFO">Unused attribute 'historyTimeToLive' on 'process' is removed.</conversion:message>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="StartEvent_1" isInterrupting="true" parallelMultiple="false">
+      <bpmn:extensionElements>
+        <zeebe:executionListeners>
+          <zeebe:executionListener eventType="end" type="migrator" />
+        </zeebe:executionListeners>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_04mzcko</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask completionQuantity="1" id="userTaskId" implementation="##unspecified" isForCompensation="false" name="userTaskName" startQuantity="1">
+      <bpmn:extensionElements>
+        <zeebe:userTask/>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04mzcko</bpmn:incoming>
+      <bpmn:outgoing>Flow_0owlpr4</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_0uw30s9">
+      <bpmn:incoming>Flow_0owlpr4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_04mzcko" sourceRef="StartEvent_1" targetRef="userTaskId"/>
+    <bpmn:sequenceFlow id="Flow_0owlpr4" sourceRef="userTaskId" targetRef="Event_0uw30s9"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane bpmnElement="calledProcessInstanceId" id="BPMNPlane_1">
+      <bpmndi:BPMNShape bpmnElement="StartEvent_1" id="StartEvent_1_di">
+        <dc:Bounds height="36" width="36" x="182" y="102"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userTaskId" id="Activity_0t9inc3_di">
+        <dc:Bounds height="80" width="100" x="330" y="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Event_0uw30s9" id="Event_0uw30s9_di">
+        <dc:Bounds height="36" width="36" x="512" y="102"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="Flow_04mzcko" id="Flow_04mzcko_di">
+        <di:waypoint x="218" y="120"/>
+        <di:waypoint x="330" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0owlpr4" id="Flow_0owlpr4_di">
+        <di:waypoint x="430" y="120"/>
+        <di:waypoint x="512" y="120"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
