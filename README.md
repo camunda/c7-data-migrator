@@ -16,6 +16,8 @@
 1. Navigate to Operate and check result.
 
 #### Migration Limitations
+- Async before/after wait states:
+  - C8 does not support async before/after wait states. Therefore, if you were to migrate an instance currently waiting asynchronously at an element in a C7 model, this instance would just continue without waiting in the equivalent C8 model. Please adjust your model's logic accordingly prior to migration
 - Message events:
   - only message catch and throw events are supported for migration
   - depending on your implementation, you may need to add [a correlation variable](https://docs.camunda.io/docs/components/modeler/bpmn/message-events/#messages) to the instance pre migration
