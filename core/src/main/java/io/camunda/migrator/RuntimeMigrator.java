@@ -154,6 +154,10 @@ public class RuntimeMigrator {
           .rootProcessInstances()
           .unfinished()
           .orderByProcessInstanceStartTime()
+          .asc()
+          // Ensure order is predictable with two order criteria:
+          // Without second criteria and PIs have same start time, order is non-deterministic.
+          .orderByProcessInstanceId()
           .asc();
 
       new Pagination<IdKeyDbModel>()
@@ -224,6 +228,7 @@ public class RuntimeMigrator {
    * @param legacyProcessInstanceId the legacy id of the root process instance.
    */
   protected void validateProcessInstanceState(String legacyProcessInstanceId) {
+    LOGGER.debug("Validate legacy process instance by ID: {}", legacyProcessInstanceId);
     ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery()
         .rootProcessInstanceId(legacyProcessInstanceId);
 

@@ -70,8 +70,8 @@ public class Pagination<T> {
     for (int i = 0; i < maxCount; i = i + batchSize) {
       StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
       int offset = i;
-      LOGGER.debug("Method: #{}, max count: {}, offset: {}, batch size: {}", stackTrace[2].getMethodName(), maxCount,
-          offset, batchSize);
+      String methodName = stackTrace[2].getMethodName();
+      LOGGER.debug("Method: #{}, max count: {}, offset: {}, batch size: {}", methodName, maxCount, offset, batchSize);
 
       callApi(() -> result.apply(offset)).forEach(callback);
     }

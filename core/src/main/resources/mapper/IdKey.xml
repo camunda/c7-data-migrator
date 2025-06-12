@@ -32,7 +32,6 @@
     SELECT ID
     FROM ${prefix}MIGRATION_MAPPING
     WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE'
-    ORDER BY ID
   </select>
 
   <update id="updateKeyById" parameterType="io.camunda.migrator.persistence.IdKeyDbModel">
@@ -52,6 +51,7 @@
   </select>
 
   <select id="findLatestStartDateByType" parameterType="java.lang.String">
+    <!-- No need to order with two criteria since we limit result to return exactly one start date -->
     SELECT START_DATE FROM ${prefix}MIGRATION_MAPPING WHERE TYPE = '${type}' ORDER BY START_DATE DESC LIMIT 1
   </select>
 
