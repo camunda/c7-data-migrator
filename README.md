@@ -1,6 +1,6 @@
 # C7 Data Migrator
 
-### How to use the Migrator
+## How to use the Migrator
 
 1. Prerequisites: Use Java 21
 2. Consider whether any of the [migration limitations](#migration-limitations) apply to your current C7 models and apply any changes necessary.
@@ -14,19 +14,33 @@
 1. Build or download the distribution.
 1. Start Migrator (start.sh/start.bat) and wait to finish.
 1. Navigate to Operate and check result.
+1. When a process instance gets skipped, you can start C7 again, modify the process instance into a supported state and shut down C7 again.
 
-#### Migration Limitations
-- Message events:
+## Migration Limitations
+
+### Runtime Migration
+
+- To migrate running process instances, the historic process instance must exist.
+  - You cannot migrate running instances when you have configured history level to `NONE` or a custom history level that doesn't create historic process instances.
+  - The minimum supported history level is `ACTIVITY`.
+- You need to add an execution listener of type `migrator` to all your start events.
+
+#### Limitations for BPMN elements
+
+- Multi-instance flow nodes
+  - Multi-instance is unsupported.
+  - Modify the state of your process instances so no multi-instance flow node is active. 
+- Message events
   - only message catch and throw events are supported for migration
   - depending on your implementation, you may need to add [a correlation variable](https://docs.camunda.io/docs/components/modeler/bpmn/message-events/#messages) to the instance pre migration
-- Triggered Boundary events:
+- Triggered Boundary events
   - C7 boundary events do not have a natural wait state
   - If the process instance to be migrated is currently at a triggered boundary event in Camunda 7, there may still be a job associated with that event, either waiting to be executed or currently running. In this state, the token is considered to be at the element where the job is created: typically the first activity of the boundary event’s handler flow, or technically the point after the boundary event if asyncAfter is used.
   - During migration to Camunda 8, the token will be mapped to the corresponding target element. However, if that element expects input data that is normally produced by the boundary event’s job (e.g. setting variables), this data may be missing in the migrated instance.
   - Recommendation: To ensure a consistent migration, allow boundary event executions to complete before initiating the migration.
 - There are elements that are supported in C7 but not supported in C8. Please refer to the [documentation](https://docs.camunda.io/docs/next/components/modeler/bpmn/bpmn-coverage/) for more details on element support in C8 and adjust your models accordingly before migration.
 
-#### Configuration
+## Configuration
 
 * migrator.batch-size - configure number of items (process instances, jobs) to be processed per iteration. Default: 500
 
