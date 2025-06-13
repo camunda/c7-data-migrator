@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -24,11 +23,11 @@ import org.slf4j.LoggerFactory;
 
 public class Pagination<T> {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(Pagination.class);
 
   protected int batchSize;
   protected Supplier<Long> maxCount;
-  protected Function<Integer, Set<T>> page;
+  protected Function<Integer, List<T>> page;
   private Query<?, T> query;
 
   public Pagination<T> batchSize(int batchSize) {
@@ -41,7 +40,7 @@ public class Pagination<T> {
     return this;
   }
 
-  public Pagination<T> page(Function<Integer, Set<T>> page) {
+  public Pagination<T> page(Function<Integer, List<T>> page) {
     this.page = page;
     return this;
   }
@@ -70,8 +69,8 @@ public class Pagination<T> {
     for (int i = 0; i < maxCount; i = i + batchSize) {
       StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
       int offset = i;
-      LOGGER.debug("Method: #{}, max count: {}, offset: {}, batch size: {}", stackTrace[2].getMethodName(), maxCount,
-          offset, batchSize);
+      String methodName = stackTrace[2].getMethodName();
+      LOGGER.debug("Method: #{}, max count: {}, offset: {}, batch size: {}", methodName, maxCount, offset, batchSize);
 
       callApi(() -> result.apply(offset)).forEach(callback);
     }
@@ -95,5 +94,4 @@ public class Pagination<T> {
     });
     return result;
   }
-
 }

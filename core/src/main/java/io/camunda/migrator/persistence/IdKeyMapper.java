@@ -5,9 +5,10 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.history;
+package io.camunda.migrator.persistence;
 
-import java.util.Set;
+import java.util.Date;
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 public interface IdKeyMapper {
@@ -26,17 +27,21 @@ public interface IdKeyMapper {
 
   String findLatestIdByType(TYPE type);
 
+  boolean checkExists(String id);
+
+  Date findLatestStartDateByType(TYPE type);
+
   Long findKeyById(String id);
 
   void insert(IdKeyDbModel idKeyDbModel);
 
-  Set<String> findSkippedProcessInstanceIds(@Param("offset") int offset, @Param("limit") int limit);
+  List<IdKeyDbModel> findSkipped(@Param("offset") int offset, @Param("limit") int limit);
 
-  Set<String> findSkippedProcessInstanceIds();
+  List<IdKeyDbModel> findSkipped();
 
-  long findSkippedProcessInstanceIdsCount();
+  long findSkippedCount();
 
-  Set<String> findAllProcessInstanceIds();
+  List<String> findAllIds();
 
   void updateKeyById(IdKeyDbModel idKeyDbModel);
 

@@ -25,7 +25,7 @@ logging:
     root: INFO
     # io.camunda.migrator: INFO
     # io.camunda.migrator.RuntimeMigrator: DEBUG
-    # io.camunda.migrator.history.IdKeyMapper: DEBUG # persistence
+    # io.camunda.migrator.persistence.IdKeyMapper: DEBUG # persistence
     # org.camunda.bpm: INFO  # C7
   file:
     name: logs/c7-data-migrator.log

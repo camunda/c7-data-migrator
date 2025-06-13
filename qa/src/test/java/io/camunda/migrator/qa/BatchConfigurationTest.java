@@ -10,12 +10,14 @@ package io.camunda.migrator.qa;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.camunda.migrator.RuntimeMigrator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
@@ -23,6 +25,9 @@ import io.camunda.client.api.search.response.ProcessInstance;
 
 @ExtendWith(OutputCaptureExtension.class)
 class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
+
+  @Autowired
+  protected RuntimeMigrator runtimeMigrator;
 
   @Test
   public void shouldPerformPaginationForProcessInstances(CapturedOutput output) {
@@ -63,8 +68,7 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then
-    List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().send().join().items();
-    assertThat(processInstances.size()).isEqualTo(5);
+    assertThat(camundaClient.newProcessInstanceSearchRequest().send().join().items()).hasSize(5);
 
     Matcher matcher = Pattern.compile("Migrator jobs found: 2").matcher(output.getOut());
     assertThat(matcher.results().count()).isEqualTo(2);

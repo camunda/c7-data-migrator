@@ -5,8 +5,9 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.history;
+package io.camunda.migrator.persistence;
 
+import java.util.Date;
 import java.util.Objects;
 
 public class IdKeyDbModel {
@@ -14,6 +15,15 @@ public class IdKeyDbModel {
   protected Long key;
   protected String id;
   protected IdKeyMapper.TYPE type;
+  protected Date startDate;
+
+  public IdKeyDbModel() {
+  }
+
+  public IdKeyDbModel(String id, Date startDate) {
+    this.id = id;
+    this.startDate = startDate;
+  }
 
   public Long key() {
     return key;
@@ -27,6 +37,10 @@ public class IdKeyDbModel {
     return type;
   }
 
+  public Date startDate() {
+    return startDate;
+  }
+
   public void setKey(Long key) {
     this.key = key;
   }
@@ -37,6 +51,10 @@ public class IdKeyDbModel {
 
   public void setType(IdKeyMapper.TYPE type) {
     this.type = type;
+  }
+
+  public void setStartDate(Date startDate) {
+    this.startDate = startDate;
   }
 
   @Override
