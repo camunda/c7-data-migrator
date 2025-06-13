@@ -16,6 +16,12 @@ on:
         required: true
         type: boolean
         default: true
+      ONLY_PUSH_TO_MAVEN_CENTRAL:
+        # To push artefact from tag to maven central. Useful if artefacts are cleaned up before they are released.
+        description: "ONLY_PUSH_TO_MAVEN_CENTRAL"
+        required: true
+        type: boolean
+        default: false
 defaults:
   run:
     shell: bash
@@ -23,6 +29,7 @@ defaults:
 env:
   RELEASE_VERSION: ${{ inputs.RELEASE_VERSION }}
   IS_DRY_RUN: ${{ inputs.IS_DRY_RUN }}
+  ONLY_PUSH_TO_MAVEN_CENTRAL: ${{ inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
   DEVELOPMENT_VERSION: ${{ inputs.DEVELOPMENT_VERSION }}
   PUSH_CHANGES: ${{ inputs.IS_DRY_RUN == false }}
   GH_TOKEN: ${{ github.token }}
@@ -52,6 +59,7 @@ jobs:
           vault-url: ${{ secrets.VAULT_ADDR }}
 
       - name: Checkout Code
+        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
@@ -109,6 +117,7 @@ jobs:
           camunda-nexus: true
 
       - name: Maven Prepare Release
+        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         id: maven-prepare-release
         run: |
           # Preparing the maven release
@@ -125,6 +134,7 @@ jobs:
             -Darguments='-Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" -DskipTests=true'
 
       - name: Collect Release Artifacts
+        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         id: release-artifacts
         run: |
           ARTIFACT_DIR=$(mktemp -d)
@@ -133,6 +143,7 @@ jobs:
           echo "dir=${ARTIFACT_DIR}" >> $GITHUB_OUTPUT
 
       - name: Upload Release Artifacts
+        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts-${RELEASE_VERSION}
@@ -140,6 +151,7 @@ jobs:
           retention-days: 14
 
       - name: Maven Perform Release - Artifactory
+        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         id: maven-perform-release-camunda
         env:
           SKIP_REPO_DEPLOY: ${{ inputs.IS_DRY_RUN }}
