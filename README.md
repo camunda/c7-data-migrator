@@ -10,7 +10,7 @@
    2. If required, make any manual adjustments required in the C8 models. Note the migrator tool will leave hints in your diagram.
    3. Add "migrator" End Execution listener of the start event of each C8 model. Example: [link](./qa/src/test/resources/io/camunda/migrator/bpmn/c8/simpleProcess.bpmn).
 1. Start C8.
-1. Deploy migrated C8 process models.
+1. Deploy migrated C8 process models and any other required resources such as referenced DMN or userTask forms.
 1. Build or download the distribution.
 1. Start Migrator (start.sh/start.bat) and wait to finish.
 1. Navigate to Operate and check result.
