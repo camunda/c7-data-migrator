@@ -162,7 +162,7 @@ jobs:
           mvn release:perform -B \
             -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
             -DlocalCheckout=${{ inputs.IS_DRY_RUN }} \
-            -Psonatype-oss-release,distro \
+            -Pcentral-sonatype-publish,distro \
             -Darguments='-DskipTests=true -Dskip.central.release=true -Dskip.camunda.release=${SKIP_REPO_DEPLOY}'
 
       - name: Checkout Code
@@ -182,5 +182,5 @@ jobs:
           mvn deploy -B \
             -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
             -DlocalCheckout=${{ inputs.IS_DRY_RUN }} \
-            -Psonatype-oss-release,central-release \
+            -Pcentral-sonatype-publish,central-release \
             -DskipTests=true -Dskip.central.release=${SKIP_REPO_DEPLOY} -Dskip.camunda.release=true
