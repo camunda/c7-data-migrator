@@ -1,0 +1,77 @@
+/*
+ * Copyright Camunda Services GmbH and/or licensed to Camunda Services GmbH under
+ * one or more contributor license agreements. See the NOTICE file distributed
+ * with this work for additional information regarding copyright ownership.
+ * Licensed under the Camunda License 1.0. You may not use this file
+ * except in compliance with the Camunda License 1.0.
+ */
+
+package io.camunda.migrator.qa.element;
+
+import static io.camunda.migrator.qa.MigrationTestConstants.LEGACY_ID_VAR_NAME;
+import static io.camunda.process.test.api.CamundaAssert.assertThat;
+import static io.camunda.process.test.api.assertions.ElementSelectors.byId;
+import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.byProcessId;
+import static io.camunda.process.test.api.assertions.UserTaskSelectors.byTaskName;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.Date;
+import org.camunda.bpm.engine.ManagementService;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.impl.util.ClockUtil;
+import org.camunda.bpm.engine.runtime.Job;
+import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class EventSubprocessMigrationTests extends AbstractElementMigrationTest {
+  @Autowired
+  private RuntimeService runtimeService;
+
+  @Autowired
+  private ManagementService managementService;
+
+  @Test
+  public void shouldMigrateNonInterruptingEventSubprocess() {
+    // given
+    deployProcessInC7AndC8("timerEventSubprocess.bpmn");
+    ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("timerEventSubprocessId");
+    runtimeService
+        .createProcessInstanceModification(processInstance.getId())
+        .startBeforeActivity("subprocessUserTaskId")
+        .execute();
+
+    // when
+    runtimeMigrator.start();
+
+    // then both user tasks exist in C8
+    assertThat(byProcessId("timerEventSubprocessId")).isActive()
+        .hasActiveElements(byId("userTaskId"))
+        .hasActiveElements(byId("subprocessUserTaskId"))
+        .hasVariable(LEGACY_ID_VAR_NAME, processInstance.getProcessInstanceId());
+    assertThat(byTaskName("userTaskName")).isCreated().hasElementId("userTaskId");
+    assertThat(byTaskName("subprocessUserTaskName")).isCreated().hasElementId("subprocessUserTaskId");
+  }
+
+  @Test
+  public void migrateInterruptingEventSubprocess() {
+    // given
+    deployProcessInC7AndC8("interruptingTimerEventSubprocess.bpmn");
+    ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("timerEventSubprocessId");
+    ClockUtil.setCurrentTime(new Date(System.currentTimeMillis() + 1000 * 60 * 20));
+
+    Job job = managementService.createJobQuery().processInstanceId(processInstance.getId()).singleResult();
+    assertNotNull(job);
+    managementService.executeJob(job.getId());
+
+    // when
+    runtimeMigrator.start();
+
+    // then canceled user task does not exist in C8
+    assertThat(byProcessId("timerEventSubprocessId")).isActive()
+        .hasNoActiveElements(byId("userTaskId"))
+        .hasActiveElements(byId("subprocessUserTaskId"))
+        .hasVariable(LEGACY_ID_VAR_NAME, processInstance.getProcessInstanceId());
+    assertThat(byTaskName("subprocessUserTaskName")).isCreated().hasElementId("subprocessUserTaskId");
+  }
+}
