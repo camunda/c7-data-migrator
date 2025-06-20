@@ -59,7 +59,7 @@ public class IdKeyDbModel {
   }
 
   /**
-   * Type is only set when instane has been skipped.
+   * Type is only set when instance has been skipped.
    */
   public boolean skippedPreviously() {
     return type() != null;
