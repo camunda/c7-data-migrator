@@ -60,6 +60,12 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
   - Processes with active multi-instance elements can currently not be migrated. We recommend to finish the execution of any multi-instance elements prior to migration.
 - Timer events:
   - Processes with active tokens in [timer events](https://docs.camunda.org/manual/latest/reference/bpmn20/events/timer-events/) are not yet supported for migration. We have [this ticket](https://github.com/camunda/camunda-bpm-platform/issues/5173) to address this limitation in the future. 
+- Variables
+    - A Date variable (2025-06-20T11:32:06.868) is migrated to C8 in `ms` format (1750419126868). [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5244)
+    - Variables are serialized. (to be changed)
+    - XML variable will be migrated to XML string variable. [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5246)
+      - Including Spin XML variables.
+    - Variables set into the scope of embedded sub-processes will not be migrated. [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5235)
 
 ## Configuration
 

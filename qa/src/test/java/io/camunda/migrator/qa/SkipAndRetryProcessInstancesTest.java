@@ -186,7 +186,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then expected message is printed
-    assertThat(output.getOut()).endsWith(NO_SKIPPED_INSTANCES_MESSAGE + "\n");
+    assertThat(output.getOut().trim()).endsWith(NO_SKIPPED_INSTANCES_MESSAGE);
 
     // and no migration was done
     assertThat(idKeyMapper.findAllIds().size()).isEqualTo(0);

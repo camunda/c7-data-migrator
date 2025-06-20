@@ -29,6 +29,7 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.repository.Deployment;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -109,6 +110,12 @@ public abstract class RuntimeMigrationAbstractTest {
   protected void deployProcessInC7AndC8(String fileName) {
     deployCamunda7Process("io/camunda/migrator/bpmn/c7/" + fileName);
     deployCamunda8Process("io/camunda/migrator/bpmn/c8/" + fileName);
+  }
+  protected void deployModelInstance(String process,
+                                   BpmnModelInstance c7Model,
+                                   io.camunda.zeebe.model.bpmn.BpmnModelInstance c8Model) {
+    repositoryService.createDeployment().addModelInstance(process + ".bpmn", c7Model).deploy();
+    camundaClient.newDeployResourceCommand().addProcessModel(c8Model, process + ".bpmn").send().join();
   }
 
   protected Optional<Variable> getVariableByScope(Long processInstanceKey, Long scopeKey, String variableName) {

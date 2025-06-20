@@ -286,7 +286,7 @@ public class RuntimeMigrator {
 
         activityInstanceMap.forEach((activityInstanceId, flowNode) -> {
           String activityId = flowNode.activityId();
-          var variableQuery = runtimeService.createVariableInstanceQuery().activityInstanceIdIn(activityInstanceId);
+          var variableQuery = runtimeService.createVariableInstanceQuery().activityInstanceIdIn(activityInstanceId); //TODo user tasks?
 
           Map<String, Object> localVariables = new Pagination<VariableInstance>().batchSize(batchSize)
               .query(variableQuery)
