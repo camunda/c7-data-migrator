@@ -8,9 +8,12 @@
 package io.camunda.migrator.qa;
 
 import static io.camunda.migrator.MigratorMode.MIGRATE;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import io.camunda.client.CamundaClient;
+import io.camunda.client.api.command.ClientException;
 import io.camunda.client.api.response.DeploymentEvent;
+import io.camunda.client.api.search.response.ProcessDefinition;
 import io.camunda.client.api.search.response.ProcessInstance;
 import io.camunda.client.api.search.response.Variable;
 import io.camunda.migrator.RuntimeMigrator;
@@ -28,6 +31,7 @@ import org.camunda.bpm.engine.repository.Deployment;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @SpringBootTest
 @CamundaSpringProcessTest
@@ -83,12 +87,20 @@ public abstract class RuntimeMigrationAbstractTest {
   }
 
   protected void deployCamunda8Process(String resourcePath) {
-    DeploymentEvent deployment = camundaClient.newDeployResourceCommand().addResourceFromClasspath(resourcePath).send()
+    DeploymentEvent deployment =
+        camundaClient.newDeployResourceCommand().addResourceFromClasspath(resourcePath).send()
         .join();
 
     if (deployment == null) {
       throw new IllegalStateException("Could not deploy process");
     }
+
+    Awaitility.await().ignoreException(ClientException.class).untilAsserted(() -> {
+      List<ProcessDefinition> c8Deployments = camundaClient.newProcessDefinitionSearchRequest()
+          .filter(filter-> filter.resourceName(resourcePath))
+          .send().join().items();
+      assertThat(c8Deployments).hasSize(1);
+    });
   }
 
   protected void deployProcessInC7AndC8(String fileName) {

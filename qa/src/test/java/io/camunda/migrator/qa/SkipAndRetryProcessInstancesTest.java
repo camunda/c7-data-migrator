@@ -15,6 +15,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureTrue;
 
 import io.camunda.client.api.search.response.ProcessInstance;
+import io.camunda.migrator.RuntimeMigrator;
+import io.github.netmikey.logunit.api.LogCapturer;
 import io.camunda.migrator.persistence.IdKeyDbModel;
 import io.camunda.migrator.persistence.IdKeyMapper;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -34,6 +37,9 @@ import org.springframework.test.context.TestPropertySource;
 @ExtendWith(OutputCaptureExtension.class)
 @TestPropertySource(properties = { "logging.level.io.camunda.migrator=WARN" })
 class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
+
+  @RegisterExtension
+  protected final LogCapturer logs = LogCapturer.create().captureForType(RuntimeMigrator.class);
 
   @Autowired
   private RuntimeService runtimeService;
@@ -81,6 +87,47 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
     assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
+  }
+
+  @Test
+  public void shouldSkipOnMissingC8Deployment() {
+    // given
+    deployCamunda7Process("io/camunda/migrator/bpmn/c7/simpleProcess.bpmn");
+    var c7Instance = runtimeService.startProcessInstanceByKey("simpleProcess");
+
+    // when
+    runtimeMigrator.start();
+
+    // then
+    logs.assertContains(String.format(
+        "Process instance with legacyId [%s] can't be migrated: "
+            + "No C8 deployment found for process ID [%s] required for instance with "
+            + "legacyID [%s].",  c7Instance.getId(), "simpleProcess", c7Instance.getId()));
+    assertThat(camundaClient.newProcessInstanceSearchRequest().send().join().items().size()).isEqualTo(0);
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(c7Instance.getId());
+  }
+
+  @Test
+  public void shouldSkipOnMissingElementInC8Deployment() {
+    // given an instance that is currently in an element in the C7 model which does not exist in the C8 model
+    deployProcessInC7AndC8("userTaskProcessWithMissingUserTaskInC8.bpmn");
+    var c7Instance = runtimeService.startProcessInstanceByKey("userTaskProcessWithMissingUserTaskInC8Id");
+
+    // when
+    runtimeMigrator.start();
+
+    // then
+    logs.assertContains(String.format(
+        "Process instance with legacyId [%s] can't be migrated: " +
+        "C7 instance detected which is currently in a C7 model element which does not exist in the equivalent deployed C8 model. "
+            + "Instance legacyId: [%s], Model legacyId: [%s], Element Id: [%s].",
+        c7Instance.getId(), c7Instance.getId(), "userTaskProcessWithMissingUserTaskInC8Id", "userTaskId"));
+    assertThat(camundaClient.newProcessInstanceSearchRequest().send().join().items().size()).isEqualTo(0);
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(c7Instance.getId());
   }
 
   @Test

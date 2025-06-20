@@ -18,6 +18,7 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
 1. Deploy migrated C8 process models and any other required resources such as referenced DMN or forms.
 1. Build or download the distribution.
 1. Start Migrator (start.sh/start.bat) and wait to finish.
+   2. Do not make any changes to the C8 deployments while the migrator is running.
 1. Navigate to Operate and check result.
 1. When a process instance gets skipped, you can start C7 again, modify the process instance into a supported state and shut down C7 again.
 
