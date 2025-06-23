@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,8 @@ import org.springframework.util.StringUtils;
 
 @Component
 public class AutoDeployer {
+
+  protected static final Logger LOGGER = LoggerFactory.getLogger(AutoDeployer.class);
 
   @Autowired
   protected CamundaClient camundaClient;
@@ -54,7 +58,7 @@ public class AutoDeployer {
       try (Stream<Path> stream = Files.walk(resourceDir)) {
         return stream.filter(file -> !Files.isDirectory(file)).collect(Collectors.toSet());
       } catch (IOException e) {
-        e.printStackTrace(); // TODO: Add error logging when available.
+        LOGGER.error("An error occurred during auto deployment: {}", e.getMessage());
       }
     }
     return Collections.emptySet();
