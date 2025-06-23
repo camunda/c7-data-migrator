@@ -10,7 +10,7 @@ package io.camunda.migrator.converter;
 import io.camunda.db.rdbms.write.domain.DecisionDefinitionDbModel;
 import org.camunda.bpm.engine.repository.DecisionDefinition;
 
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 
 public class DecisionDefinitionConverter {
 

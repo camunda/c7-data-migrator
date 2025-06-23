@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 
 public class ProcessDefinitionConverter {
 

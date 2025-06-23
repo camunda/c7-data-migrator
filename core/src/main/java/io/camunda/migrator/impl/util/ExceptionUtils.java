@@ -5,9 +5,10 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator;
+package io.camunda.migrator.impl.util;
 
 import io.camunda.client.api.command.ClientException;
+import io.camunda.migrator.exception.RuntimeMigratorException;
 import java.util.function.Supplier;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.camunda.bpm.engine.ProcessEngineException;

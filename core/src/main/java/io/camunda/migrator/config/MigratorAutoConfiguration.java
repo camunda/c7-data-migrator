@@ -10,7 +10,7 @@ package io.camunda.migrator.config;
 import static org.camunda.bpm.engine.ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE;
 import static org.camunda.bpm.engine.ProcessEngineConfiguration.HISTORY_AUTO;
 
-import io.camunda.migrator.AutoDeployer;
+import io.camunda.migrator.impl.AutoDeployer;
 import io.camunda.migrator.HistoryMigrator;
 import io.camunda.migrator.RuntimeMigrator;
 import io.camunda.migrator.config.property.MigratorProperties;

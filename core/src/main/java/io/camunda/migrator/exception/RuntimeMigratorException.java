@@ -5,11 +5,11 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator;
+package io.camunda.migrator.exception;
 
-public class MigratorException extends RuntimeException {
+public class RuntimeMigratorException extends MigratorException {
 
-  public MigratorException(String message, Throwable cause) {
+  public RuntimeMigratorException(String message, Throwable cause) {
     super(message, cause);
   }
 
