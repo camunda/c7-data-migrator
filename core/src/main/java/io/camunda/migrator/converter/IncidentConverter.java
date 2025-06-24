@@ -11,8 +11,8 @@ import io.camunda.db.rdbms.write.domain.IncidentDbModel;
 import io.camunda.search.entities.IncidentEntity;
 import org.camunda.bpm.engine.history.HistoricIncident;
 
-import static io.camunda.migrator.history.ConverterUtil.convertDate;
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.convertDate;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 
 public class IncidentConverter {
 

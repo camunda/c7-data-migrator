@@ -10,7 +10,7 @@ package io.camunda.migrator.qa.element;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.camunda.migrator.MigratorException;
+import io.camunda.migrator.exception.MigratorException;
 import io.camunda.migrator.qa.RuntimeMigrationAbstractTest;
 import org.junit.jupiter.api.Test;
 

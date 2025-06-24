@@ -11,8 +11,8 @@ import io.camunda.db.rdbms.write.domain.UserTaskDbModel;
 import io.camunda.search.entities.ProcessInstanceEntity;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 
-import static io.camunda.migrator.history.ConverterUtil.convertDate;
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.convertDate;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 
 public class UserTaskConverter {
 

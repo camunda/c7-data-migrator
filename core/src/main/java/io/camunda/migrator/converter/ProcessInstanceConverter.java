@@ -11,8 +11,8 @@ import io.camunda.db.rdbms.write.domain.ProcessInstanceDbModel;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 
 import static io.camunda.db.rdbms.write.domain.ProcessInstanceDbModel.ProcessInstanceDbModelBuilder;
-import static io.camunda.migrator.history.ConverterUtil.convertDate;
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.convertDate;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 import static io.camunda.search.entities.ProcessInstanceEntity.ProcessInstanceState;
 
 public class ProcessInstanceConverter {

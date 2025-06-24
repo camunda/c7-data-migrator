@@ -11,7 +11,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import io.camunda.client.api.command.ClientStatusException;
-import io.camunda.migrator.RuntimeMigratorException;
+import io.camunda.migrator.exception.RuntimeMigratorException;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.junit.jupiter.api.Test;
 
