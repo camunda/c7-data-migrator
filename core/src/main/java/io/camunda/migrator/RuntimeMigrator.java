@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import io.camunda.migrator.persistence.IdKeyDbModel;
 import io.camunda.migrator.persistence.IdKeyMapper;
+import java.util.Collection;
 import java.util.Date;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -37,10 +38,14 @@ import org.camunda.bpm.engine.runtime.VariableInstance;
 import org.camunda.bpm.engine.runtime.VariableInstanceQuery;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.impl.instance.ProcessImpl;
 import org.camunda.bpm.model.bpmn.instance.Activity;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.MultiInstanceLoopCharacteristics;
 
+import org.camunda.bpm.model.bpmn.instance.StartEvent;
+import org.camunda.bpm.model.bpmn.instance.SubProcess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -276,6 +281,15 @@ public class RuntimeMigrator {
                   "C7 instance detected which is currently in a C7 flow node which does not exist in the equivalent deployed C8 model. "
                       + "Instance legacyId: [%s], Model legacyId: [%s], Element Id: [%s].",
                   legacyProcessInstanceId, c8DefinitionId, flowNode.activityId));
+            }
+          }
+
+          Collection<StartEvent> startEvents = c8BpmnModelInstance.getModelElementsByType(StartEvent.class);
+          for(StartEvent startEvent : startEvents) {
+            BaseElement parent = (BaseElement) startEvent.getParentElement();
+            if (parent instanceof ProcessImpl && !startEvent.getEventDefinitions().isEmpty()) {
+              throw new IllegalStateException("Process instance with root level not None Start Event is detected " + startEvent.getName() +
+                  " in C8 process instance "  + processInstance.getId() + ".");
             }
           }
         });
