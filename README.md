@@ -92,9 +92,32 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
     - Variables set into the scope of embedded sub-processes are not supported yet and will be ignored. Will be implemented in this [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5235).
 
 
-## Configuration
+## Configuration (Spring Boot Properties)
 
-* migrator.batch-size - configure number of items (process instances, jobs) to be processed per iteration. Default: 500
+The C7 Data Migrator can be configured using the following Spring Boot properties (typically in `application.yml` or as environment variables):
+
+| Property Name                              | Description                                                            | Default Value |
+|-------------------------------------------|------------------------------------------------------------------------|--------------|
+| `migrator.batch-size`                      | Number of items (process instances, jobs) to be processed per request. | 500          |
+| `migrator.rdbms-exporter.auto-ddl`        | Enable automatic database schema creation for exporter.                | true         |
+| `migrator.c7.auto-ddl`                    | Enable automatic database schema creation for C7.                      | true         |
+| `migrator.source.jdbc-url`                | JDBC URL for the source database.                                      | jdbc:h2:./h2/data-migrator-source.db |
+| `migrator.source.username`                | Username for the source database.                                      | sa           |
+| `migrator.source.password`                | Password for the source database.                                      | -            |
+| `migrator.source.driver-class-name`       | Driver class for the source database.                                  | org.h2.Driver |
+| `migrator.target.jdbc-url`                | JDBC URL for the target database.                                      | jdbc:h2:./h2/data-migrator-target.db |
+| `migrator.target.username`                | Username for the target database.                                      | sa           |
+| `migrator.target.password`                | Password for the target database.                                      | -            |
+| `migrator.target.driver-class-name`       | Driver class for the target database.                                  | org.h2.Driver |
+| `camunda.client.mode`                      | Camunda 8 operating mode (e.g., 'self-managed')                        | -            |
+| `camunda.client.grpc-address`             | gRPC API address for Camunda 8                                         | http://localhost:26500 |
+| `camunda.client.rest-address`             | REST API address for Camunda 8                                         | http://localhost:8088 |
+| `logging.level.root`                      | Root logging level                                                     | INFO         |
+| `logging.level.io.camunda.migrator`       | Logging level for migrator components                                  | INFO         |
+| `logging.file.name`                       | Log file location                                                      | logs/c7-data-migrator.log |
+| `camunda.database.database-vendor-id`     | Database vendor ID for Camunda (e.g., h2, postgresql)                 | h2           |
+
+You can override these properties via environment variables or command-line arguments. For more details, see the [Spring Boot documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html).
 
 
 ## Development Setup

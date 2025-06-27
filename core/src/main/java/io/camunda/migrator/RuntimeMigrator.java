@@ -41,8 +41,6 @@ import org.camunda.bpm.model.bpmn.instance.Activity;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.MultiInstanceLoopCharacteristics;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -52,11 +50,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Core component responsible for migrating Camunda 7 runtime process instances to Camunda 8.
+ * Handles process instance migration, variable mapping, and state synchronization.
+ *
+ * @since 0.1.0
+ */
 @Component
 public class RuntimeMigrator {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(RuntimeMigrator.class);
-  public final static int DEFAULT_BATCH_SIZE = 500;
+  private static final int DEFAULT_BATCH_SIZE = 500;
+
+  // Activity types
+  private static final String ACTIVITY_TYPE_SUBPROCESS = "subProcess";
+  private static final String ACTIVITY_TYPE_MIGRATOR = "migrator";
+
+  // Variable names
+  private static final String VAR_LEGACY_ID = "legacyId";
 
   @Autowired
   protected RepositoryService repositoryService;
@@ -89,19 +99,17 @@ public class RuntimeMigrator {
 
   public void migrate() {
     fetchProcessInstancesToMigrate(legacyProcessInstance -> {
-
       String legacyProcessInstanceId = legacyProcessInstance.id();
       Date startDate = legacyProcessInstance.startDate();
       if (skipProcessInstance(legacyProcessInstanceId)) {
-        LOGGER.info("Skipping process instance with legacyId: {}", legacyProcessInstanceId);
+        MigratorLogger.infoSkippingProcessInstance(legacyProcessInstanceId);
         if (!legacyProcessInstance.skippedPreviously()) {
           storeMapping(legacyProcessInstanceId, startDate, null);
         }
-
       } else if (legacyProcessInstance.skippedPreviously() || !idKeyMapper.checkExists(legacyProcessInstanceId)) {
-        LOGGER.debug("Starting new C8 process instance with legacyId: [{}]", legacyProcessInstanceId);
+        MigratorLogger.debugStartingNewProcessInstance(legacyProcessInstanceId);
         Long processInstanceKey = startNewProcessInstance(legacyProcessInstanceId);
-        LOGGER.debug("Started C8 process instance with processInstanceKey: [{}]", processInstanceKey);
+        MigratorLogger.debugStartedProcessInstance(processInstanceKey);
         if (processInstanceKey != null) {
           storeMapping(legacyProcessInstanceId, startDate, processInstanceKey);
         }
@@ -126,28 +134,25 @@ public class RuntimeMigrator {
     try {
       validateProcessInstanceState(legacyProcessInstanceId);
     } catch (IllegalStateException e) {
-      LOGGER.warn("Process instance with legacyId [{}] can't be migrated: {}", legacyProcessInstanceId, e.getMessage());
+      MigratorLogger.warnProcessInstanceCannotBeMigrated(legacyProcessInstanceId, e.getMessage());
       return true;
     }
-
     return false;
   }
 
   protected void fetchProcessInstancesToMigrate(Consumer<IdKeyDbModel> storeMappingConsumer) {
-    LOGGER.info("Fetching process instances to migrate");
+    MigratorLogger.infoFetchingProcessInstances();
 
     if (RETRY_SKIPPED.equals(mode)) {
       new Pagination<IdKeyDbModel>()
           .batchSize(batchSize)
           .maxCount(idKeyMapper::findSkippedCount)
-          // Hardcode offset to 0 since each callback updates the database and leads to fresh results.
           .page(offset -> idKeyMapper.findSkipped(0, batchSize))
           .callback(storeMappingConsumer);
-
     } else {
-      LOGGER.debug("Fetching latest start date of process instances");
+      MigratorLogger.debugFetchingLatestStartDate();
       Date latestStartDate = callApi(() -> idKeyMapper.findLatestStartDateByType(TYPE.RUNTIME_PROCESS_INSTANCE));
-      LOGGER.debug("Latest start date: {}", latestStartDate);
+      MigratorLogger.debugLatestStartDate(latestStartDate);
 
       HistoricProcessInstanceQuery processInstanceQuery = historyService.createHistoricProcessInstanceQuery()
           .startedAfter(latestStartDate)
@@ -179,32 +184,11 @@ public class RuntimeMigrator {
     keyIdDbModel.setType(TYPE.RUNTIME_PROCESS_INSTANCE);
 
     if (RETRY_SKIPPED.equals(mode)) {
-      LOGGER.debug("Updating key for legacyId [{}] with value [{}]", legacyProcessInstanceId, processInstanceKey);
+      MigratorLogger.debugUpdatingKey(legacyProcessInstanceId, processInstanceKey);
       callApi(() -> idKeyMapper.updateKeyById(keyIdDbModel));
     } else {
-      LOGGER.debug("Inserting record [{}]", keyIdDbModel);
+      MigratorLogger.debugInsertingRecord(keyIdDbModel);
       callApi(() -> idKeyMapper.insert(keyIdDbModel));
-    }
-  }
-
-  protected Long startNewProcessInstance(String legacyProcessInstanceId) {
-    var processInstanceQuery = runtimeService.createProcessInstanceQuery().processInstanceId(legacyProcessInstanceId);
-
-    String fetchProcessIdError = "Process instance fetching failed for legacyId: " + legacyProcessInstanceId;
-    ProcessInstance processInstance = callApi(processInstanceQuery::singleResult, fetchProcessIdError);
-    if (processInstance != null) {
-      String bpmnProcessId = processInstance.getProcessDefinitionKey();
-
-      var createProcessInstance = camundaClient.newCreateInstanceCommand()
-          .bpmnProcessId(bpmnProcessId)
-          .latestVersion()
-          .variables(getGlobalVariables(legacyProcessInstanceId));
-
-      String createProcessInstanceErrorMessage = "Creating process instance failed for legacyId: " + legacyProcessInstanceId;
-      return callApi(() -> createProcessInstance.send().join(), createProcessInstanceErrorMessage).getProcessInstanceKey();
-    } else {
-      LOGGER.warn("Process instance with legacyId {} doesn't exist anymore. Has it been completed or cancelled in the meantime?", legacyProcessInstanceId);
-      return null;
     }
   }
 
@@ -217,8 +201,29 @@ public class RuntimeMigrator {
         .query(variableQuery)
         .toVariableMap();
 
-    globalVariables.put("legacyId", legacyProcessInstanceId);
+    globalVariables.put(VAR_LEGACY_ID, legacyProcessInstanceId);
     return globalVariables;
+  }
+
+  protected Long startNewProcessInstance(String legacyProcessInstanceId) {
+    var processInstanceQuery = runtimeService.createProcessInstanceQuery().processInstanceId(legacyProcessInstanceId);
+
+    ProcessInstance processInstance = callApi(processInstanceQuery::singleResult,
+        MigratorLogger.formatProcessInstanceFetchError(legacyProcessInstanceId));
+    if (processInstance != null) {
+      String bpmnProcessId = processInstance.getProcessDefinitionKey();
+      var createProcessInstance = camundaClient.newCreateInstanceCommand()
+          .bpmnProcessId(bpmnProcessId)
+          .latestVersion()
+          .variables(getGlobalVariables(legacyProcessInstanceId));
+
+      return callApi(() -> createProcessInstance.send().join(),
+          MigratorLogger.formatProcessInstanceCreateError(legacyProcessInstanceId))
+          .getProcessInstanceKey();
+    } else {
+      MigratorLogger.warnProcessInstanceNoLongerExists(legacyProcessInstanceId);
+      return null;
+    }
   }
 
   /**
@@ -227,7 +232,7 @@ public class RuntimeMigrator {
    * @param legacyProcessInstanceId the legacy id of the root process instance.
    */
   protected void validateProcessInstanceState(String legacyProcessInstanceId) {
-    LOGGER.debug("Validate legacy process instance by ID: {}", legacyProcessInstanceId);
+    MigratorLogger.debugValidatingProcessInstance(legacyProcessInstanceId);
     ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery()
         .rootProcessInstanceId(legacyProcessInstanceId);
 
@@ -245,9 +250,7 @@ public class RuntimeMigrator {
 
           List<ProcessDefinition> c8Definitions = callApi(c8DefinitionSearchRequest::execute).items();
           if (c8Definitions.isEmpty()) {
-            throw new IllegalStateException(
-                String.format("No C8 process found for process ID [%s] required for instance with legacyID [%s].",
-                    c8DefinitionId, legacyProcessInstanceId));
+            throw new IllegalStateException(MigratorLogger.formatNoC8ProcessError(c8DefinitionId, legacyProcessInstanceId));
           }
 
           ActivityInstance activityInstanceTree = callApi(() -> runtimeService.getActivityInstance(processInstanceId));
@@ -258,46 +261,42 @@ public class RuntimeMigrator {
               callApi(() -> camundaClient.newProcessDefinitionGetXmlRequest(processDefinitionKey).execute());
           BpmnModelInstance c8BpmnModelInstance = Bpmn.readModelFromStream(new ByteArrayInputStream(c8XmlString.getBytes(StandardCharsets.UTF_8)));
 
-          LOGGER.debug("Collecting active descendant activity instances for legacyId [{}]", processInstanceId);
+          MigratorLogger.debugCollectingActivityInstances(processInstanceId);
           Map<String, FlowNode> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
-          LOGGER.debug("Found {} active activity instances to validate", activityInstanceMap.size());
+          MigratorLogger.debugFoundActivityInstances(activityInstanceMap.size());
 
           for (FlowNode flowNode : activityInstanceMap.values()) {
             // validate no multi-instance loop characteristics
             FlowElement element = c7BpmnModelInstance.getModelElementById(flowNode.activityId());
-            if ((element instanceof Activity activity) && (activity.getLoopCharacteristics() instanceof MultiInstanceLoopCharacteristics)) {
-              throw new IllegalStateException("Found multi-instance loop characteristics for " + element.getName() +
-                  " in C7 process instance " + processInstance.getId() + ".");
+            if ((element instanceof Activity activity) &&
+                (activity.getLoopCharacteristics() instanceof MultiInstanceLoopCharacteristics)) {
+              throw new IllegalStateException(
+                  MigratorLogger.formatMultiInstanceError(element.getName(), processInstance.getId()));
             }
 
             // validate element exists in C8 deployment
             if (c8BpmnModelInstance.getModelElementById(flowNode.activityId()) == null) {
-              throw new IllegalStateException(String.format(
-                  "C7 instance detected which is currently in a C7 flow node which does not exist in the equivalent deployed C8 model. "
-                      + "Instance legacyId: [%s], Model legacyId: [%s], Element Id: [%s].",
-                  legacyProcessInstanceId, c8DefinitionId, flowNode.activityId));
+              throw new IllegalStateException(
+                  MigratorLogger.formatElementNotInC8Error(legacyProcessInstanceId, c8DefinitionId, flowNode.activityId()));
             }
           }
         });
   }
 
   protected void activateMigratorJobs() {
-    LOGGER.info("Activating migrator jobs");
+    MigratorLogger.infoActivatingMigratorJobs();
     List<ActivatedJob> migratorJobs = null;
     do {
       var jobQuery = camundaClient.newActivateJobsCommand()
-          .jobType("migrator")
+          .jobType(ACTIVITY_TYPE_MIGRATOR)
           .maxJobsToActivate(batchSize);
 
-      String fetchMigratorJobsErrorMessage = "Error while fetching migrator jobs";
-      migratorJobs = callApi(() -> jobQuery.send().join().getJobs(), fetchMigratorJobsErrorMessage);
-
-      LOGGER.debug("Migrator jobs found: {}", migratorJobs.size());
+      migratorJobs = callApi(() -> jobQuery.send().join().getJobs(), MigratorLogger.getMigratorJobsFetchError());
+      MigratorLogger.debugMigratorJobsFound(migratorJobs.size());
 
       migratorJobs.forEach(activatedJob -> {
-        String fetchLegacyIdErrorMessage =
-            String.format("Error while fetching legacyId for job with key:" + activatedJob.getProcessInstanceKey());
-        String legacyId = (String) callApi(() -> activatedJob.getVariable("legacyId"), fetchLegacyIdErrorMessage);
+        String legacyId = (String) callApi(() -> activatedJob.getVariable(VAR_LEGACY_ID),
+            MigratorLogger.formatLegacyIdFetchError(activatedJob.getProcessInstanceKey()));
         long processInstanceKey = activatedJob.getProcessInstanceKey();
 
         var modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(processInstanceKey);
@@ -306,12 +305,12 @@ public class RuntimeMigrator {
         long elementInstanceKey = activatedJob.getElementInstanceKey();
         modifyProcessInstance.terminateElement(elementInstanceKey);
 
-        String fetchActivityErrorMessage = "Error while fetching activity for job with legacyId:" + legacyId;
-        ActivityInstance activityInstanceTree = callApi(() -> runtimeService.getActivityInstance(legacyId), fetchActivityErrorMessage);
+        ActivityInstance activityInstanceTree = callApi(() -> runtimeService.getActivityInstance(legacyId),
+            MigratorLogger.formatActivityFetchError(legacyId));
 
-        LOGGER.debug("Collecting active descendant activity instances for activityId [{}]", activityInstanceTree.getActivityId());
+        MigratorLogger.debugCollectingActivityInstances(activityInstanceTree.getActivityId());
         Map<String, FlowNode> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
-        LOGGER.debug("Found {} active activity instances to activate", activityInstanceMap.size());
+        MigratorLogger.debugFoundActivityInstances(activityInstanceMap.size());
 
         activityInstanceMap.forEach((activityInstanceId, flowNode) -> {
           String activityId = flowNode.activityId();
@@ -323,15 +322,14 @@ public class RuntimeMigrator {
 
           String subProcessInstanceId = flowNode.subProcessInstanceId();
           if (subProcessInstanceId != null) {
-            localVariables.put("legacyId", subProcessInstanceId);
+            localVariables.put(VAR_LEGACY_ID, subProcessInstanceId);
           }
 
           modifyProcessInstance.activateElement(activityId).withVariables(localVariables, activityId);
         });
 
-        String batchUpdatedActivitiesErrorMessage = "Error while activating jobs";
-        callApi(() -> ((ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3) modifyProcessInstance).send().join(), batchUpdatedActivitiesErrorMessage);
-        // no need to complete the job since the modification canceled the migrator job in the start event
+        callApi(() -> ((ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3) modifyProcessInstance)
+            .send().join(), MigratorLogger.getJobsActivationError());
       });
     } while (!migratorJobs.isEmpty());
   }
@@ -340,18 +338,17 @@ public class RuntimeMigrator {
     Arrays.asList(activityInstance.getChildActivityInstances()).forEach(actInst -> {
       activeActivities.putAll(getActiveActivityIdsById(actInst, activeActivities));
 
-      if (!"subProcess".equals(actInst.getActivityType())) {
-        activeActivities.put(actInst.getId(), new FlowNode(actInst.getActivityId(), ((ActivityInstanceImpl) actInst).getSubProcessInstanceId()));
+      if (!ACTIVITY_TYPE_SUBPROCESS.equals(actInst.getActivityType())) {
+        activeActivities.put(actInst.getId(), new FlowNode(actInst.getActivityId(), 
+            ((ActivityInstanceImpl) actInst).getSubProcessInstanceId()));
       }
     });
 
-    /* TODO: Transition instances might map to start before or after.
-    When it maps to asyncBefore it should be fine. When it maps to asyncAfter an execution is fired twice in C7 and C8.
-     */
     Arrays.asList(activityInstance.getChildTransitionInstances()).forEach(ti -> {
       var transitionInstance = ((TransitionInstanceImpl) ti);
-      if (!"subProcess".equals(transitionInstance.getActivityType())) {
-        activeActivities.put(transitionInstance.getId(), new FlowNode(transitionInstance.getActivityId(), transitionInstance.getSubProcessInstanceId()));
+      if (!ACTIVITY_TYPE_SUBPROCESS.equals(transitionInstance.getActivityType())) {
+        activeActivities.put(transitionInstance.getId(), 
+            new FlowNode(transitionInstance.getActivityId(), transitionInstance.getSubProcessInstanceId()));
       }
     });
     return activeActivities;
