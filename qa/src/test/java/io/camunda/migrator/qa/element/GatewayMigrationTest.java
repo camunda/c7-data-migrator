@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class GatewayMigrationTests extends RuntimeMigrationAbstractTest {
+public class GatewayMigrationTest extends RuntimeMigrationAbstractTest {
 
   @Autowired
   private RuntimeService runtimeService;

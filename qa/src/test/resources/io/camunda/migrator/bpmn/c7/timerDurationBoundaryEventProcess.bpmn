@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1twsy0k" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.24.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:process id="timerDurationBoundaryEventProcessId" name="timerDurationBoundaryEventProcess" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="StartEvent_1" name="start">
+      <bpmn:outgoing>Flow_10ucyxv</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="userTaskEndEventId" name="userTaskEnd">
+      <bpmn:incoming>Flow_1mv8nmm</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1mv8nmm" sourceRef="userTaskId" targetRef="userTaskEndEventId" />
+    <bpmn:userTask id="userTaskId" name="userTask">
+      <bpmn:incoming>Flow_10ucyxv</bpmn:incoming>
+      <bpmn:outgoing>Flow_1mv8nmm</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="timerBoundaryEventId" name="timerBoundary" attachedToRef="userTaskId">
+      <bpmn:outgoing>Flow_1ydkpis</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0n5gunm">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P10D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="timerEndEventId" name="timerEnd">
+      <bpmn:incoming>Flow_1ydkpis</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1ydkpis" sourceRef="timerBoundaryEventId" targetRef="timerEndEventId" />
+    <bpmn:sequenceFlow id="Flow_10ucyxv" sourceRef="StartEvent_1" targetRef="userTaskId" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="timerDurationBoundaryEventProcessId">
+      <bpmndi:BPMNShape id="Event_01rsrlb_di" bpmnElement="userTaskEndEventId">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="418" y="142" width="64" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12palpm_di" bpmnElement="userTaskId">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_13zhqqv_di" bpmnElement="timerEndEventId">
+        <dc:Bounds x="432" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="428" y="265" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="142" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ca6fv2_di" bpmnElement="timerBoundaryEventId">
+        <dc:Bounds x="312" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="244" y="173" width="72" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1mv8nmm_di" bpmnElement="Flow_1mv8nmm">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ydkpis_di" bpmnElement="Flow_1ydkpis">
+        <di:waypoint x="330" y="175" />
+        <di:waypoint x="330" y="240" />
+        <di:waypoint x="432" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10ucyxv_di" bpmnElement="Flow_10ucyxv">
+        <di:waypoint x="188" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
