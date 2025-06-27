@@ -5,6 +5,7 @@ migrator:
 logging:
   level.io.camunda.migrator: DEBUG
   level.org.camunda.bpm.engine.impl.persistence.entity.HistoricProcessInstanceEntity: DEBUG
+  level.io.camunda.migrator.qa.variables.TestVariableInterceptor: INFO
 
 camunda:
   database:
