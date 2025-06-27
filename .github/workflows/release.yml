@@ -151,21 +151,6 @@ jobs:
           path: ${{ steps.release-artifacts.outputs.dir }}
           retention-days: 14
 
-      - name: Maven Perform Release - Artifactory
-        if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
-        id: maven-perform-release-camunda
-        env:
-          SKIP_REPO_DEPLOY: ${{ inputs.IS_DRY_RUN }}
-        run: |
-          # Perform a maven release
-          # https://maven.apache.org/maven-release/maven-release-plugin/perform-mojo.html
-          # https://maven.apache.org/maven-release/maven-release-plugin/usage/perform-release.html
-          mvn release:perform -B \
-            -Dgpg.passphrase="${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}" \
-            -DlocalCheckout=${{ inputs.IS_DRY_RUN }} \
-            -Pcentral-sonatype-publish,distro \
-            -Darguments='-DskipTests=true -Dskip.central.release=true -Dskip.camunda.release=${SKIP_REPO_DEPLOY}'
-
       - name: Checkout Code
         # Tag does not exist if dry run
         if: ${{ !inputs.IS_DRY_RUN }}
