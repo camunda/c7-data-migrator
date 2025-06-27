@@ -1,26 +1,79 @@
 # C7 Data Migrator
 
+[![Java Version](https://img.shields.io/badge/Java-21-blue)](https://www.oracle.com/java/technologies/downloads/#java21)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)](https://spring.io/projects/spring-boot)
+[![Status](https://img.shields.io/badge/Status-In%20Development-yellow)](https://github.com/camunda/c7-data-migrator)
+
+A tool for migrating Camunda 7 process instances and related data to Camunda 8. This migrator helps organizations transition their running process instances while preserving execution state, variables, and business data.
+
 > [!WARNING]  
-> The C7 Data Migrator is still in development and not yet ready for production use. 
+> The C7 Data Migrator is still in development and not yet ready for production use. However, we encourage users to try it out and provide feedback.
 
-However, even though the C7 Data Migrator is not yet ready for production, we encourage users to try it out, play around with the current functionality and provide feedback.
+## Table of Contents
+- [Key Features](#key-features)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Migration Process](#migration-process)
+- [Configuration](#configuration)
+- [Migration Limitations](#migration-limitations)
+- [Architecture](#architecture)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
 
-## How to use the Migrator
+## Key Features
 
-1. Prerequisites: Use Java 21
-2. Consider whether any of the [migration limitations](#migration-limitations) apply to your current C7 models and apply any changes necessary.
-1. Stop C7 process execution. I.e., shut down your engines.
-2. Migrate your models 
-   1. Can use https://migration-analyzer.consulting-sandbox.camunda.cloud/ to migrate your C7 models.
-   2. If required, make any manual adjustments required in the C8 models. Note the migrator tool will leave hints in your diagram.
-   3. Add "migrator" End Execution listener of the start event of each C8 model. Example: [link](./qa/src/test/resources/io/camunda/migrator/bpmn/c8/simpleProcess.bpmn).
-1. Start C8.
-1. Deploy migrated C8 process models and any other required resources such as referenced DMN or forms.
-1. Build or download the distribution.
-1. Start Migrator (start.sh/start.bat) and wait to finish.
-   2. Do not make any changes to the C8 deployments while the migrator is running.
-1. Navigate to Operate and check result.
-1. When a process instance gets skipped, you can start C7 again, modify the process instance into a supported state and shut down C7 again.
+- State-preserving migration of running process instances
+- Variable data migration with type conversion
+- Error handling and retry mechanisms
+- Detailed logging and reporting
+- Support for complex BPMN constructs
+
+## Prerequisites
+
+- Java 21 or higher
+- Maven 3.6+ (for building from source)
+- Running instance of Camunda 8
+- Access to Camunda 7 database
+- Migrated BPMN models (C7 → C8)
+
+## Quick Start
+
+1. Download the latest release or build from source:
+   ```bash
+   mvn clean install
+   ```
+
+2. Configure your source (C7) and target (C8) connection details in `application.yml`
+
+3. Run the migrator:
+   ```bash
+   ./start.sh  # or start.bat on Windows
+   ```
+
+## Migration Process
+
+1. **Preparation Phase**
+   - Stop C7 process execution
+   - Migrate your BPMN models using the [Migration Analyzer](https://migration-analyzer.consulting-sandbox.camunda.cloud/)
+   - Add required `migrator` execution listeners to normal flow start events of C8 models
+   - Adjust C8 models to ensure compatibility with migration limitations
+   - Test migrated models in C8
+
+2. **Migration Phase**
+   - Deploy C8 process models and resources
+   - Start the migrator
+   - Monitor progress in logs
+   - Verify results in Operate
+   - Redeploy C8 models if necessary
+     - Remove `migrator` execution listeners from C8 models after successful migration
+     - Revert changes in C8 models if necessary
+     - Migrate process instances to latest version of C8 models
+
+3. **Validation Phase**
+   - Check migrated instances
+   - Verify variable data
+   - Test process continuation
 
 ## Migration Limitations
 
@@ -30,6 +83,46 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
   - You cannot migrate running instances when you have configured history level to `NONE` or a custom history level that doesn't create historic process instances.
   - The minimum supported history level is `ACTIVITY`.
 - You need to add an execution listener of type `migrator` to all your start events.
+
+### Process Instance Validation
+
+The migrator validates each process instance before migration and will skip instances that fail validation for the following reasons:
+
+1. **Missing C8 Process Definition**
+   - If no corresponding C8 process definition is found for the C7 process ID
+   - Error message: "No C8 process found for process ID [processId] required for instance with legacyID [instanceId]"
+
+2. **Multi-Instance Activities**
+   - If the process instance has active multi-instance activities
+   - Error message: "Found multi-instance loop characteristics for [elementName] in C7 process instance [instanceId]"
+
+3. **Missing Flow Node Elements**
+   - If a C7 process instance is currently at a flow node that doesn't exist in the deployed C8 model
+   - Error message: "C7 instance detected which is currently in a C7 flow node which does not exist in the equivalent deployed C8 model"
+
+When a process instance is skipped:
+- The skip is logged with a warning message
+- The instance is marked as skipped in the migration database
+- You can list skipped instances using the migrator tool
+- You can retry migration of skipped instances after fixing the underlying issues
+
+### Handling Skipped Instances
+
+1. **List Skipped Instances**
+   ```bash
+   ./start.sh --list-skipped
+   ```
+
+2. **Retry Skipped Instances**
+   ```bash
+   ./start.sh --retry-skipped
+   ```
+
+3. **Common Resolution Steps**
+   - Deploy the missing C8 process definition
+   - Wait for multi-instance activities to complete
+   - Ensure all active flow nodes have corresponding elements in C8
+   - Modify process instance state to a supported configuration
 
 #### Limitations for BPMN elements
 
@@ -94,21 +187,47 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
 
 ## Configuration
 
-* migrator.batch-size - configure number of items (process instances, jobs) to be processed per iteration. Default: 500
+The C7 Data Migrator can be configured using properties in your `application.yml` file. Here's a complete example configuration.
 
+### Available Properties
 
-## Development Setup
-1. Prerequisites: Use Java 21
-1. Set up Camunda 8
-   1. Download Camunda [c8run-8.8](https://github.com/camunda/camunda/releases/tag/c8run-8.8)
-   1. Extract files
-   1. Start from distribution root by running `./start.sh` (or `c8run.exe start`)
-1. Clone this repository
-1. Build from root with `mvn clean install` (add `-DskipTests` to skip the tests)
-1. (Optional) Run the [example data generator](./examples/generate-runtime/src/main/java/io/camunda/migrator/example/ExampleApplication.java)
-1. (Optional) Run the migrator
-   1. Either using [the example](./examples/migrate-runtime/src/main/java/io/camunda/migrator/example/RuntimeExampleApplication.java)
-   1. Or by building, extracting and running [the distribution](./assembly)
+| Property Name                       | Description                                                            | Default Value |
+|-------------------------------------|------------------------------------------------------------------------|-------------|
+| `migrator.batch-size`               | Number of items (process instances, jobs) to be processed per request. | 500         |
+| `migrator.rdbms-exporter.auto-ddl`  | Enable automatic database schema creation for exporter.                | true        |
+| `migrator.c7.auto-ddl`              | Enable automatic database schema creation for C7.                      | true        |
+| `migrator.source.jdbc-url`          | JDBC URL for the source database.                                      | jdbc:h2:./h2/data-migrator-source.db |
+| `migrator.source.username`          | Username for the source database.                                      | sa          |
+| `migrator.source.password`          | Password for the source database.                                      | -           |
+| `migrator.source.driver-class-name` | Driver class for the source database.                                  | org.h2.Driver |
+| `migrator.target.jdbc-url`          | JDBC URL for the target database.                                      | jdbc:h2:./h2/data-migrator-target.db |
+| `migrator.target.username`          | Username for the target database.                                      | sa          |
+| `migrator.target.password`          | Password for the target database.                                      | -           |
+| `migrator.target.driver-class-name` | Driver class for the target database.                                  | org.h2.Driver |
+| `camunda.client.*`                  | Read more about [all configuration options](https://docs.camunda.io/docs/next/apis-tools/spring-zeebe-sdk/configuration/).                         |             |
+| `camunda.client.mode`               | Camunda 8 operating mode (e.g., 'self-managed')                        | -           |
+| `camunda.client.grpc-address`       | gRPC API address for Camunda 8                                         | http://localhost:26500 |
+| `camunda.client.rest-address`       | REST API address for Camunda 8                                         | http://localhost:8088 |
+| `logging.level.root`                | Root logging level                                                     | INFO        |
+| `logging.level.io.camunda.migrator` | Logging level for migrator components                                  | INFO        |
+| `logging.file.name`                 | Log file location                                                      | logs/c7-data-migrator.log |
+
+## Development
+
+### Building from Source
+
+1. Clone the repository
+2. Build the project:
+   ```bash
+   mvn clean install
+   ```
+3. Find distribution in `assembly/target/`
+
+### Running Tests
+
+```bash
+mvn verify
+```
 
 ## Contributing
 
