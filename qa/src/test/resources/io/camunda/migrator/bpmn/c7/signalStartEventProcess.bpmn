@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0elwlk4" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.31.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <bpmn:process id="SignalProcessId" name="SignalProcessName" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0hfaaqh</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_09psi8u" signalRef="Signal_229re8f" />
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0uta57x">
+      <bpmn:incoming>Flow_0kbl3ya</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="userTaskId" name="userTaskName">
+      <bpmn:incoming>Flow_0hfaaqh</bpmn:incoming>
+      <bpmn:outgoing>Flow_1u10686</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0hfaaqh" sourceRef="StartEvent_1" targetRef="userTaskId" />
+    <bpmn:sequenceFlow id="Flow_1u10686" sourceRef="userTaskId" targetRef="userTask2Id" />
+    <bpmn:userTask id="userTask2Id" name="userTask2Name">
+      <bpmn:incoming>Flow_1u10686</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kbl3ya</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0kbl3ya" sourceRef="userTask2Id" targetRef="Event_0uta57x" />
+  </bpmn:process>
+  <bpmn:signal id="Signal_229re8f" name="signal-name" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="SignalProcessId">
+      <bpmndi:BPMNShape id="Event_0rpc6hk_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="172" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10gnrkf_di" bpmnElement="userTaskId">
+        <dc:Bounds x="320" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0uta57x_di" bpmnElement="Event_0uta57x">
+        <dc:Bounds x="692" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0u4lx9w" bpmnElement="userTask2Id">
+        <dc:Bounds x="480" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1u10686_di" bpmnElement="Flow_1u10686">
+        <di:waypoint x="420" y="120" />
+        <di:waypoint x="480" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hfaaqh_di" bpmnElement="Flow_0hfaaqh">
+        <di:waypoint x="208" y="120" />
+        <di:waypoint x="320" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kbl3ya_di" bpmnElement="Flow_0kbl3ya">
+        <di:waypoint x="580" y="120" />
+        <di:waypoint x="692" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

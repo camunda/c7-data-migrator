@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:conversion="http://camunda.org/schema/conversion/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0elwlk4" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.31.0" conversion:converterVersion="0.12.4" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:process id="SignalProcessId" name="SignalProcessName" processType="None" isClosed="false" isExecutable="true">
+    <bpmn:startEvent id="Event_05x6m7y" name="">
+      <bpmn:extensionElements>
+        <zeebe:executionListeners>
+          <zeebe:executionListener eventType="end" type="migrator" />
+        </zeebe:executionListeners>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_1oebryg</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1oebryg" sourceRef="Event_05x6m7y" targetRef="userTaskId" />
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:extensionElements>
+        <zeebe:executionListeners>
+          <zeebe:executionListener eventType="end" type="migrator" />
+        </zeebe:executionListeners>
+        <conversion:reference>Signal_229re8f</conversion:reference>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_0hfaaqh</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_09psi8u" signalRef="Signal_229re8f" />
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0uta57x">
+      <bpmn:incoming>Flow_1fdkzri</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="userTaskId" name="userTaskName" implementation="##unspecified">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0hfaaqh</bpmn:incoming>
+      <bpmn:outgoing>Flow_1u10686</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0hfaaqh" sourceRef="StartEvent_1" targetRef="userTaskId" />
+    <bpmn:sequenceFlow id="Flow_1u10686" sourceRef="userTaskId" targetRef="userTask2Id" />
+    <bpmn:userTask id="userTask2Id" name="userTask2Name" implementation="##unspecified">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1u10686</bpmn:incoming>
+      <bpmn:outgoing>Flow_1fdkzri</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1fdkzri" sourceRef="userTask2Id" targetRef="Event_0uta57x" />
+  </bpmn:process>
+  <bpmn:signal id="Signal_229re8f" name="signal-name">
+    <bpmn:extensionElements>
+      <conversion:referencedBy>StartEvent_1</conversion:referencedBy>
+    </bpmn:extensionElements>
+  </bpmn:signal>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="SignalProcessId">
+      <bpmndi:BPMNShape id="Event_0rpc6hk_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="172" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0uta57x_di" bpmnElement="Event_0uta57x">
+        <dc:Bounds x="582" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10gnrkf_di" bpmnElement="userTaskId">
+        <dc:Bounds x="320" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1n7itv9" bpmnElement="userTask2Id">
+        <dc:Bounds x="450" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0hfaaqh_di" bpmnElement="Flow_0hfaaqh">
+        <di:waypoint x="208" y="120" />
+        <di:waypoint x="320" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u10686_di" bpmnElement="Flow_1u10686">
+        <di:waypoint x="420" y="120" />
+        <di:waypoint x="450" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fdkzri_di" bpmnElement="Flow_1fdkzri">
+        <di:waypoint x="550" y="120" />
+        <di:waypoint x="582" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
