@@ -90,6 +90,20 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
     - XML variable is migrated to JSON string variable. [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5246)
       - Spin XML variable is migrated to XML string variable.
     - Variables set into the scope of embedded sub-processes are not supported yet and will be ignored. Will be implemented in this [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5235).
+- Event subprocess:
+  - **Important limitation during migration**: Event subprocesses with interrupting start events can cause unexpected behavior during migration if triggered at the wrong moment. This includes timer, message, and signal start events.
+  - **What can go wrong**:
+    - A task that already ran in Camunda 7 might run again in Camunda 8.
+    - The process might end up in the wrong state after migration — for example, being one step behind what you see in C7.
+  - **When could it happen**:
+    - This can occur when a process instance is already inside an event subprocess in C7, and the start event of that same subprocess is accidentally triggered again in C8 during migration.
+  - **How to prevent it**:
+    - **Don't correlate messages or send signals during migration**
+    - **Temporarily disable timer start events** in event subprocesses:
+      - TODO: this will be changed in this Github [issue](https://github.com/camunda/camunda-bpm-platform/issues/5173) 
+      - You can remove them or convert them to signal/message events for the migration
+      - Or you can set a far-future duration like `P30D` (30 days) to ensure they won't fire
+    - If above suggestions are not feasible in your use case **make sure service tasks are idempotent** — so repeating them does not cause issues.
 
 
 ## Configuration
