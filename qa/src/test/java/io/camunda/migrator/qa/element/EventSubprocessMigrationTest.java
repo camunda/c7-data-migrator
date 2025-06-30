@@ -20,7 +20,7 @@ import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class EventSubprocessMigrationTests extends AbstractElementMigrationTest {
+public class EventSubprocessMigrationTest extends AbstractElementMigrationTest {
   @Autowired
   private RuntimeService runtimeService;
 
