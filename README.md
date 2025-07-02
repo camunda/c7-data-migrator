@@ -132,8 +132,12 @@ However, even though the C7 Data Migrator is not yet ready for production, we en
 
 ## Configuration
 
-* migrator.batch-size - configure number of items (process instances, jobs) to be processed per iteration. Default: 500
+* `migrator.batch-size` - configure the number of items (process instances, jobs) to be processed per iteration. Default: 500
 
+## Troubleshooting
+
+**Q:** I can see the process instances in Operate, but they are stuck in the `migrator` listener on start events. What am I missing?
+**A:** If the migration stopped unexpectedly before/during the `migrator` execution listener job execution, rerun the Data Migrator to complete the migration.
 
 ## Development Setup
 1. Prerequisites: Use Java 21
