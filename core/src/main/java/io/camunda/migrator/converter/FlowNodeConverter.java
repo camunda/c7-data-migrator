@@ -12,8 +12,8 @@ import org.camunda.bpm.engine.ActivityTypes;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 
 import static io.camunda.db.rdbms.write.domain.FlowNodeInstanceDbModel.FlowNodeInstanceDbModelBuilder;
-import static io.camunda.migrator.history.ConverterUtil.convertDate;
-import static io.camunda.migrator.history.ConverterUtil.getNextKey;
+import static io.camunda.migrator.impl.util.ConverterUtil.convertDate;
+import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
 import static io.camunda.search.entities.FlowNodeInstanceEntity.FlowNodeType;
 
 public class FlowNodeConverter {

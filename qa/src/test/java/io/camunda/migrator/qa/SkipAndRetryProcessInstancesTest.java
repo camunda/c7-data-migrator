@@ -9,8 +9,8 @@ package io.camunda.migrator.qa;
 
 import static io.camunda.migrator.MigratorMode.LIST_SKIPPED;
 import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
-import static io.camunda.migrator.PrintUtils.NO_SKIPPED_INSTANCES_MESSAGE;
-import static io.camunda.migrator.PrintUtils.PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE;
+import static io.camunda.migrator.impl.util.PrintUtils.NO_SKIPPED_INSTANCES_MESSAGE;
+import static io.camunda.migrator.impl.util.PrintUtils.PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureTrue;
 

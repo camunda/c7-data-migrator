@@ -11,7 +11,7 @@ package io.camunda.migrator.qa.element;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.camunda.migrator.MigratorException;
+import io.camunda.migrator.exception.MigratorException;
 import io.camunda.migrator.RuntimeMigrator;
 import io.camunda.migrator.qa.RuntimeMigrationAbstractTest;
 import io.github.netmikey.logunit.api.LogCapturer;

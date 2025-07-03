@@ -7,7 +7,7 @@
  */
 package io.camunda.migrator;
 
-import static io.camunda.migrator.ExceptionUtils.callApi;
+import static io.camunda.migrator.impl.util.ExceptionUtils.callApi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
