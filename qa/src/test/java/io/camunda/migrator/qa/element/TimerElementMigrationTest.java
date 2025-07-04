@@ -13,12 +13,15 @@ import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.by
 
 import io.camunda.process.test.api.CamundaProcessTestContext;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class TimerElementMigrationTest extends AbstractElementMigrationTest {
+
+  private static final OffsetDateTime DATE_IN_TIMER_DATE_CATCH_PROCESS = OffsetDateTime.parse("1963-11-23T00:00:00Z");
 
   @Autowired
   private CamundaProcessTestContext processTestContext;
@@ -78,6 +81,29 @@ public class TimerElementMigrationTest extends AbstractElementMigrationTest {
     assertThat(byProcessId("timerCycleBoundaryEventProcessId")).isActive()
         .hasActiveElement("userTaskId", 1)
         .hasCompletedElement( "timerEndEventId", 2)
+        .hasVariable(LEGACY_ID_VAR_NAME, c7instance.getProcessInstanceId());
+  }
+
+  @Test
+  public void migrateTimerCatchWithDate() {
+    // given
+    deployProcessInC7AndC8("timerDateCatchProcess.bpmn");
+    ProcessInstance c7instance = runtimeService.startProcessInstanceByKey("timerDateCatchProcessId");
+
+    // when
+    runtimeMigrator.start();
+
+    // then instance is still waiting in the timer catch event
+    assertThat(byProcessId("timerDateCatchProcessId")).isActive()
+        .hasActiveElements("timerCatchId")
+        .hasVariable(LEGACY_ID_VAR_NAME, c7instance.getProcessInstanceId());
+
+    // when advancing time to the timer due date
+    processTestContext.increaseTime(Duration.between(processTestContext.getCurrentTime(), DATE_IN_TIMER_DATE_CATCH_PROCESS));
+
+    // then
+    assertThat(byProcessId("timerDateCatchProcessId")).isCompleted()
+        .hasCompletedElements("timerCatchId", "timerCatchEndId")
         .hasVariable(LEGACY_ID_VAR_NAME, c7instance.getProcessInstanceId());
   }
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_16h25z7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.24.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:process id="timerDateCatchProcessId" name="timerDateCatchProcess" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="startId" name="startId">
+      <bpmn:outgoing>Flow_0pm8dhj</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="timerCatchEndId" name="timerCatchEnd">
+      <bpmn:incoming>Flow_1rpodhv</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1rpodhv" sourceRef="timerCatchId" targetRef="timerCatchEndId" />
+    <bpmn:intermediateCatchEvent id="timerCatchId" name="timerCatch">
+      <bpmn:incoming>Flow_0pm8dhj</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rpodhv</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0ccukge">
+        <bpmn:timeDate xsi:type="bpmn:tFormalExpression">1963-11-23T00:00:00Z</bpmn:timeDate>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0pm8dhj" sourceRef="startId" targetRef="timerCatchId" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="timerDateCatchProcessId">
+      <bpmndi:BPMNShape id="Event_00wbhor_di" bpmnElement="timerCatchEndId">
+        <dc:Bounds x="392" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="375" y="125" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_09jejm4_di" bpmnElement="timerCatchId">
+        <dc:Bounds x="292" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="284" y="125" width="54" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="startId">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="156" y="125" width="31" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1rpodhv_di" bpmnElement="Flow_1rpodhv">
+        <di:waypoint x="328" y="100" />
+        <di:waypoint x="392" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pm8dhj_di" bpmnElement="Flow_0pm8dhj">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="292" y="100" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
