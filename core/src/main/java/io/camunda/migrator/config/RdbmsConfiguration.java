@@ -223,6 +223,7 @@ public class RdbmsConfiguration {
         mappingReader,
         batchOperationReader,
         null,
+        null,
         null);
   }
 }
