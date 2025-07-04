@@ -240,6 +240,55 @@ logging:
 | | `.level.io.camunda.migrator` | `string`  | Migrator logging level. Default: `INFO`                                                                                                   |
 | | `.file.name`                 | `string`  | Log file location. Set to: `logs/c7-data-migrator.log`. If not specified, logs are output to the console.                                 |
 
+## Variable transformation
+
+The `VariableInterceptor` interface allows you to define custom logic that executes whenever a variable is accessed or modified during migration. This is useful for auditing, transforming, or validating variable values.
+
+### How to Implement a VariableInterceptor
+
+1. Create a class that implements `VariableInterceptor`.
+2. Annotate your class with `@Component` to register it as a Spring bean.
+3. Override the `execute(VariableInvocation invocation)` method to add your logic.
+4. Register your interceptor as a bean in your application in necessary.
+
+**Example:**
+```java
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+@Component
+@Order(100) // Optional: controls execution order if multiple interceptors exist
+public class MyVariableInterceptor implements VariableInterceptor {
+  @Override
+  public void execute(VariableInvocation invocation) throws Exception {
+    Object value = invocation.getC7Variable().getValue();
+    // Custom logic here
+    invocation.setVariableValue(value); // Optionally modify the value
+  }
+}
+```
+
+### Execution Order
+
+- If multiple interceptors are present, their execution order is determined by the `@Order` annotation (lower values run first).
+- If `@Order` is not specified, the default order is used.
+-
+
+
+---
+
+**Already Implemented Interceptors**
+
+The following interceptors are already implemented in the project:
+
+1. **DefaultVariableInterceptor**
+- Handles formatting and migration of primitive and object variables.
+
+2. **(Add other interceptors here as they are implemented in your project, e.g., CustomTypeVariableInterceptor, LoggingVariableInterceptor, etc.)**
+
+*To see all registered interceptors and their order, you can fetch them from the Spring context as described previously.*
+
+
 ## Migration Limitations
 
 ### Runtime Migration
