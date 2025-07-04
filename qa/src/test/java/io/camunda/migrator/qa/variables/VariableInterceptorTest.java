@@ -45,9 +45,9 @@ public class VariableInterceptorTest extends RuntimeMigrationAbstractTest {
 
     // then two instances and two interceptor invocations
     CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("varIntercept", "value");
+        .hasVariable("varIntercept", "Hello");
     CamundaAssert.assertThat(byProcessId("userTaskProcessId"))
-        .hasVariable("varIntercept", "value");
+        .hasVariable("varIntercept", "Hello");
 
     assertThat(output.getOut()).contains("Hello from interceptor");
     Matcher matcher = Pattern.compile("Hello from interceptor").matcher(output.getOut());

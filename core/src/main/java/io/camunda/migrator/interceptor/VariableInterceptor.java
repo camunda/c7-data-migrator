@@ -25,6 +25,7 @@ package io.camunda.migrator.interceptor;
  *     // Custom logic before or after variable access
  *     Object value = invocation.getValue();
  *     // Modify or log the value as needed
+ *     invocation.setVariableValue(modifiedValue);
  *   }
  * }
  * </pre>

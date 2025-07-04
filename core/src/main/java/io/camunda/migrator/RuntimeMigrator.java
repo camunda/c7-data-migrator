@@ -27,12 +27,10 @@ import io.camunda.zeebe.model.bpmn.instance.StartEvent;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.camunda.bpm.engine.HistoryService;
@@ -239,7 +237,7 @@ public class RuntimeMigrator {
         .batchSize(batchSize)
         .query(variableQuery)
         .context(context)
-        .toVariableMap();
+        .toVariableMapAll();
     return allVariables;
   }
 

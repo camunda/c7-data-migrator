@@ -16,6 +16,8 @@ import io.camunda.migrator.RuntimeMigrator;
 import io.camunda.migrator.config.property.MigratorProperties;
 import io.camunda.migrator.converter.ConverterConfiguration;
 
+import io.camunda.migrator.impl.DateVariableInterceptor;
+import io.camunda.migrator.impl.DefaultVariableInterceptor;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.persistence.StrongUuidGenerator;
 import org.camunda.bpm.engine.spring.ProcessEngineFactoryBean;
@@ -100,6 +102,16 @@ public class MigratorAutoConfiguration {
 
   @Autowired
   protected PlatformTransactionManager sourceTransactionManager;
+
+  @Bean
+  public DefaultVariableInterceptor defaultVariableInterceptor() {
+    return new DefaultVariableInterceptor();
+  }
+
+  @Bean
+  public DateVariableInterceptor dateVariableInterceptor() {
+    return new DateVariableInterceptor();
+  }
 
   @Bean
   public ProcessEngineConfigurationImpl processEngineConfiguration(@Value("${migrator.c7.auto-ddl:false}") final boolean autoDdl) {

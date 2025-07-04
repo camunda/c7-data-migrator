@@ -19,6 +19,7 @@ import io.camunda.migrator.qa.variables.JsonSerializable;
 import io.camunda.migrator.qa.variables.XmlSerializable;
 import io.camunda.process.test.api.CamundaAssert;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import org.awaitility.Awaitility;
 import org.camunda.bpm.engine.task.Task;
@@ -141,7 +142,6 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
   }
 
   @Test
-  @Disabled // https://github.com/camunda/camunda-bpm-platform/issues/5244
   public void shouldSetDateVariable() {
     // deploy processes
     deployProcessInC7AndC8("simpleProcess.bpmn");
@@ -155,15 +155,7 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("dateVar", date);
-
-    List<Variable> c8vars = camundaClient.newVariableSearchRequest()
-        .filter(f -> f.name("dateVar"))
-        .send()
-        .join()
-        .items();
-
-    assertThat(c8vars.get(0).getValue()).isEqualTo(runtimeService.getVariable(simpleProcessInstance.getId(),"dateVar"));
+        .hasVariable("dateVar", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(date));
   }
 
   @Test
