@@ -13,6 +13,8 @@ import static org.camunda.bpm.engine.ProcessEngineConfiguration.DB_SCHEMA_UPDATE
 import static org.camunda.bpm.engine.ProcessEngineConfiguration.HISTORY_AUTO;
 
 import io.camunda.migrator.impl.AutoDeployer;
+import com.zaxxer.hikari.HikariDataSource;
+import io.camunda.migrator.AutoDeployer;
 import io.camunda.migrator.HistoryMigrator;
 import io.camunda.migrator.RuntimeMigrator;
 import io.camunda.migrator.config.mybatis.C8Configuration;
@@ -32,16 +34,11 @@ import org.camunda.bpm.engine.spring.SpringProcessEngineServicesConfiguration;
 import org.camunda.spin.plugin.impl.SpinProcessEnginePlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -56,12 +53,6 @@ import org.springframework.transaction.PlatformTransactionManager;
     AutoDeployer.class,
     HistoryMigrator.class,
     RuntimeMigrator.class
-})
-@AutoConfigureAfter({
-    DataSourceAutoConfiguration.class,
-    DataSourceTransactionManagerAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
 })
 @Configuration
 @EnableConfigurationProperties(MigratorProperties.class)
@@ -89,22 +80,14 @@ public class MigratorAutoConfiguration {
       this.migratorProperties = migratorProperties;
     }
 
-    protected DataSourceBuilder<?> createDataSourceBuilder(DataSourceProperties properties) {
-      return DataSourceBuilder.create()
-          .url(properties.getJdbcUrl())
-          .username(properties.getUsername())
-          .password(properties.getPassword())
-          .driverClassName(properties.getDriverClassName());
-    }
-
     @Bean
     @Primary
     public DataSource c7DataSource() {
       DataSourceProperties props = migratorProperties.getC7().getDataSource();
       if (props.getJdbcUrl() == null) {
-        return createDefaultDataSource();
+        return createDefaultDataSource(props);
       }
-      return createDataSourceBuilder(props).build();
+      return new HikariDataSource(props);
     }
 
     @Bean
@@ -117,9 +100,9 @@ public class MigratorAutoConfiguration {
     public DataSource c8DataSource() {
       DataSourceProperties props = migratorProperties.getC8().getDataSource();
       if (props.getJdbcUrl() == null) {
-        return createDefaultDataSource();
+        return createDefaultDataSource(props);
       }
-      return createDataSourceBuilder(props).build();
+      return new HikariDataSource(props);
     }
 
     @Bean
@@ -137,13 +120,9 @@ public class MigratorAutoConfiguration {
       return null;
     }
 
-    protected DataSource createDefaultDataSource() {
-      return DataSourceBuilder.create()
-          .url("jdbc:h2:mem:migrator")
-          .username("sa")
-          .password("sa")
-          .driverClassName("org.h2.Driver")
-          .build();
+    protected HikariDataSource createDefaultDataSource(DataSourceProperties props) {
+      props.setJdbcUrl("jdbc:h2:mem:migrator");
+      return new HikariDataSource(props);
     }
   }
 
@@ -192,12 +171,14 @@ public class MigratorAutoConfiguration {
     protected ProcessEngineConfigurationImpl processEngineConfiguration;
 
     @Bean
+    @DependsOn({"migratorDataSource", "c7DataSource"})
     public ProcessEngineFactoryBean processEngineFactoryBean() {
       final ProcessEngineFactoryBean factoryBean = new ProcessEngineFactoryBean();
       factoryBean.setProcessEngineConfiguration(processEngineConfiguration);
 
       return factoryBean;
     }
+
   }
 
 }
