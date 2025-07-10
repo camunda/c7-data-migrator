@@ -13,6 +13,7 @@ import io.camunda.db.rdbms.config.VendorDatabaseProperties;
 import io.camunda.db.rdbms.sql.PurgeMapper;
 import io.camunda.db.rdbms.write.service.RdbmsPurger;
 import io.camunda.migrator.HistoryMigrator;
+import io.camunda.migrator.config.C8DataSourceConfigured;
 import io.camunda.migrator.qa.runtime.ProcessDefinitionDeployer;
 import io.camunda.search.entities.FlowNodeInstanceEntity;
 import io.camunda.search.entities.ProcessInstanceEntity;
@@ -29,11 +30,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @Import(HistoryMigrationAbstractTest.HistoryCustomConfiguration.class)
+@TestPropertySource(locations = "classpath:application-history.properties")
 public abstract class HistoryMigrationAbstractTest {
 
   @Autowired
@@ -104,6 +108,7 @@ public abstract class HistoryMigrationAbstractTest {
   public static class HistoryCustomConfiguration {
 
     @Bean
+    @Conditional(C8DataSourceConfigured.class)
     public RdbmsPurger rdbmsPurger(
         PurgeMapper purgeMapper,
         VendorDatabaseProperties vendorDatabaseProperties) {
