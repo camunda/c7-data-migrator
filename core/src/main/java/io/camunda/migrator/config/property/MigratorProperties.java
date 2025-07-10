@@ -14,6 +14,7 @@ public class MigratorProperties {
 
   public static final int DEFAULT_BATCH_SIZE = 500;
   public static final String PREFIX = "camunda.migrator";
+  public static final String DEFAULT_JOB_TYPE = "migrator";
 
   public enum DataSource {
     C7, C8
@@ -21,6 +22,8 @@ public class MigratorProperties {
 
   protected Integer batchSize = DEFAULT_BATCH_SIZE;
   protected DataSource dataSource = DataSource.C7;
+  protected String jobType = DEFAULT_JOB_TYPE;
+  protected String validationJobType;
 
   protected Boolean autoDdl;
   protected String tablePrefix;
@@ -74,6 +77,47 @@ public class MigratorProperties {
 
   public void setDataSource(DataSource dataSource) {
     this.dataSource = dataSource;
+  }
+
+  public String getJobType() {
+    return jobType;
+  }
+
+  public void setJobType(String jobType) {
+    this.jobType = jobType;
+  }
+
+  public String getValidationJobType() {
+    return validationJobType;
+  }
+
+  public void setValidationJobType(String validationJobType) {
+    this.validationJobType = validationJobType;
+  }
+
+  /**
+   * Returns the job type to use for validation purposes.
+   * If validation-job-type is defined, it returns that value.
+   * Otherwise, it returns the job-type value.
+   */
+  public String getEffectiveValidationJobType() {
+    return validationJobType != null ? validationJobType : jobType;
+  }
+
+  /**
+   * Returns whether job type validation should be skipped entirely.
+   * Returns true if validation-job-type is set to "DISABLED".
+   */
+  public boolean isJobTypeValidationDisabled() {
+    return "DISABLED".equals(validationJobType);
+  }
+
+  /**
+   * Returns the job type to use for job activation in activateMigratorJobs.
+   * This always returns the job-type value.
+   */
+  public String getJobActivationType() {
+    return jobType;
   }
 
 }

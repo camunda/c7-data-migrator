@@ -182,16 +182,85 @@ camunda.client:
 ```yaml
 camunda.migrator:
   batch-size: 500                      # Number of records to process in each batch
+  job-type: migrator                   # Job type for actual job activation (used for validation and activation unless validation-job-type is defined)
+  validation-job-type: '=if legacyId then "migrator" else "noop"'        # Job type for validation (optional - falls back to job-type if not defined)
   auto-ddl: true                       # Automatically create/update database schema
   table-prefix: MY_PREFIX_             # Optional table prefix for migrator schema
   data-source: C7                      # Choose if the migrator schema is created on the data source of 'C7' or 'C8'
 ```
 
+### Job Type Configuration
+
+The migrator supports two job type configurations with fallback behavior:
+
+1. **`job-type`**: Used for actual job activation
+   - This is the primary job type used when activating jobs in Camunda 8.
+   - It is required for the migrator to function correctly.
+2. **`validation-job-type`**: Used for validation purposes (optional)
+
+**Default Behavior:**
+When `validation-job-type` is not defined, `job-type` is used for both validation and activation.
+
+**Basic Configuration:**
+```yaml
+camunda.migrator:
+  job-type: migrator  # Used for both validation and activation
+```
+
+**Separate Validation and Activation:**
+```yaml
+camunda.migrator:
+  job-type: migrator                                           # Used for activation
+  validation-job-type: '=if legacyId then "migrator" else "noop"'  # Used for validation with FEEL expression
+```
+
+**Important Notes:**
+- When `validation-job-type` is not defined, `job-type` is used for both purposes
+- The `job-type` is always used for job activation
+- The `validation-job-type` can be a FEEL expression (starts with `=`) for dynamic validation
+- Set `validation-job-type` to `DISABLED` to disable job type validation entirely
+- Use FEEL expressions only for validation, not for job activation since on job activation, the FEEL expression is already evaluated to a static value
+- Variables referenced in FEEL expressions must exist in the process instance context
+
+**FEEL Expression Requirements:**
+When using FEEL expressions in the `validation-job-type` property, you must also specify the same expression in the execution listener of your BPMN process start events. The migrator configuration alone is not sufficient.
+
+Example BPMN configuration for FEEL expression validation:
+```xml
+<bpmn:startEvent id="StartEvent_1">
+  <bpmn:extensionElements>
+    <zeebe:executionListeners>
+      <zeebe:executionListener eventType="end" type="=if legacyId then &quot;migrator&quot; else &quot;noop&quot;" />
+    </zeebe:executionListeners>
+  </bpmn:extensionElements>
+</bpmn:startEvent>
+```
+
+**Important Note for Externally Started Process Instances:**
+
+Migrator jobs for externally started process instances (process instances not started by the Data Migrator) are **not activated** by the data migrator. These process instances do not contain the `legacyId` variable that the migrator uses to identify instances that need migration.
+
+When using FEEL expressions like `=if legacyId then "migrator" else "noop"` in the execution listener, externally started process instances will generate jobs with the type `noop` instead of `migrator`. To handle these jobs properly, you need to implement a **noop job worker** that simply activates and completes these jobs without performing any migration logic.
+
+Example noop job worker implementation:
+```java
+@JobWorker(type = "noop")
+public void handleNoopJobs(ActivatedJob job) {
+    // Simply complete the job without any processing
+    // This allows externally started process instances to continue normally
+}
+```
+
+This approach ensures that:
+- Process instances started by the Data Migrator are handled by the `migrator` job worker
+- Externally started process instances continue their normal execution flow through the `noop` job worker
+- Both types of instances can coexist in the same Camunda 8 environment
+
 ### Camunda 7 Database for Runtime and History Migration
 ```yaml
 camunda.migrator.c7.data-source:
-  table-prefix: MY_PREFIX_             # Optional prefix for C7 database tables
-  auto-ddl: true                       # Automatically create/update C7 database schema
+  table-prefix: MY_PREFIX_             # Optional prefix for Camunda 7 database tables
+  auto-ddl: true                       # Automatically create/update Camunda 7 database schema
   jdbc-url: jdbc:h2:./h2/data-migrator-source.db
   username: sa                         # Database username
   password: sa                         # Database password
@@ -201,8 +270,8 @@ camunda.migrator.c7.data-source:
 ### Camunda 8 RDBMS Database for History Migration
 ```yaml
 camunda.migrator.c8.data-source:
-  table-prefix: MY_PREFIX_             # Optional prefix for C8 RDBMS database tables
-  auto-ddl: true                       # Automatically create/update C8 RDBMS database schema
+  table-prefix: MY_PREFIX_             # Optional prefix for Camunda 8 RDBMS database tables
+  auto-ddl: true                       # Automatically create/update Camunda 8 RDBMS database schema
   jdbc-url: jdbc:h2:./h2/data-migrator-target.db
   username: sa                         # Database username
   password: sa                         # Database password
@@ -229,6 +298,8 @@ logging:
 | | `.rest-address`              | `string`  | The REST API endpoint for Camunda 8 Platform. Default: `http://localhost:8088`                                                            |
 | `camunda.migrator` |                              |           |                                                                                                                                           |
 | | `.batch-size`                | `number`  | Number of records to process in each migration batch. Default: `500`                                                                      |
+| | `.job-type`                 | `string`  | Job type for actual job activation. Default: `migrator`.                                                                              |
+| | `.validation-job-type`      | `string`  | Job type for validation purposes. Optional: falls back to `job-type` if not defined. Set to `DISABLED` to disable job type execution listener validation entirely. |
 | | `.auto-ddl`                  | `boolean` | Automatically create/update migrator database schema. Default: `false`                                                                    |
 | | `.table-prefix`              | `string`  | Optional prefix for migrator database tables. Default: _(empty)_                                                                          |
 | | `.data-source`               | `string`  | Choose if the migrator schema is created in the `C7` or `C8` data source. Default: `C7`                                                   |
