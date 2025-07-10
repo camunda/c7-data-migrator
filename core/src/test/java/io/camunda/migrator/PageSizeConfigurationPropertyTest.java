@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(properties = { "camunda.migrator.batch-size=2" })
-class BatchConfigurationPropertyTest {
+@SpringBootTest(properties = { "camunda.migrator.page-size=2" })
+class PageSizeConfigurationPropertyTest {
 
   @Autowired
   private RuntimeMigrator runtimeMigrator;
 
   @Test
-  public void shouldSetBatchSize() {
+  public void shouldSetPageSize() {
 
-    Assertions.assertThat(runtimeMigrator.getBatchSize()).isEqualTo(2);
+    Assertions.assertThat(runtimeMigrator.getPageSize()).isEqualTo(2);
   }
 
 }

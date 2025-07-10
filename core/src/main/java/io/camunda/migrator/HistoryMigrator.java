@@ -59,7 +59,7 @@ import java.util.List;
 @Conditional(C8DataSourceConfigured.class)
 public class HistoryMigrator {
 
-  protected static int BATCH_SIZE = 500;
+  protected static int PAGE_SIZE = 500;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HistoryMigrator.class);
 
@@ -168,8 +168,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyProcessDefinitionsCount = legacyProcessDefinitionQuery.count();
-    for (int i = 0; i < maxLegacyProcessDefinitionsCount; i = i + BATCH_SIZE - 1) {
-      legacyProcessDefinitionQuery.listPage(i, BATCH_SIZE).forEach(legacyProcessDefinition -> {
+    for (int i = 0; i < maxLegacyProcessDefinitionsCount; i = i + PAGE_SIZE - 1) {
+      legacyProcessDefinitionQuery.listPage(i, PAGE_SIZE).forEach(legacyProcessDefinition -> {
         String legacyId = legacyProcessDefinition.getId();
         LOGGER.info("Migration of legacy process definition with id '{}' completed", legacyId);
         ProcessDefinitionDbModel dbModel = processDefinitionConverter.apply(legacyProcessDefinition);
@@ -190,8 +190,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyProcessInstancesCount = legacyProcessInstanceQuery.count();
-    for (int i = 0; i < maxLegacyProcessInstancesCount; i = i + BATCH_SIZE - 1) {
-      legacyProcessInstanceQuery.listPage(i, BATCH_SIZE).forEach(legacyProcessInstance -> {
+    for (int i = 0; i < maxLegacyProcessInstancesCount; i = i + PAGE_SIZE - 1) {
+      legacyProcessInstanceQuery.listPage(i, PAGE_SIZE).forEach(legacyProcessInstance -> {
         String legacyProcessInstanceId = legacyProcessInstance.getId();
 
         Long processDefinitionKey = findProcessDefinitionKey(legacyProcessInstance.getProcessDefinitionId());
@@ -233,8 +233,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyIncidentsCount = legacyIncidentQuery.count();
-    for (int i = 0; i < maxLegacyIncidentsCount; i = i + BATCH_SIZE - 1) {
-      legacyIncidentQuery.listPage(i, BATCH_SIZE).forEach(legacyIncident -> {
+    for (int i = 0; i < maxLegacyIncidentsCount; i = i + PAGE_SIZE - 1) {
+      legacyIncidentQuery.listPage(i, PAGE_SIZE).forEach(legacyIncident -> {
         String legacyIncidentId = legacyIncident.getId();
         ProcessInstanceEntity legacyProcessInstance = findProcessInstanceKey(legacyIncident.getProcessInstanceId());
         if (legacyProcessInstance != null) {
@@ -267,8 +267,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyVariablesCount = legacyVariableQuery.count();
-    for (int i = 0; i < maxLegacyVariablesCount; i = i + BATCH_SIZE - 1) {
-      legacyVariableQuery.listPage(i, BATCH_SIZE).forEach(legacyVariable -> {
+    for (int i = 0; i < maxLegacyVariablesCount; i = i + PAGE_SIZE - 1) {
+      legacyVariableQuery.listPage(i, PAGE_SIZE).forEach(legacyVariable -> {
         String legacyVariableId = legacyVariable.getId();
         String legacyProcessInstanceId = legacyVariable.getProcessInstanceId();
         ProcessInstanceEntity processInstance = findProcessInstanceKey(legacyProcessInstanceId);
@@ -303,8 +303,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyTasksCount = legacyTaskQuery.count();
-    for (int i = 0; i < maxLegacyTasksCount; i = i + BATCH_SIZE - 1) {
-      legacyTaskQuery.listPage(i, BATCH_SIZE).forEach(legacyUserTask -> {
+    for (int i = 0; i < maxLegacyTasksCount; i = i + PAGE_SIZE - 1) {
+      legacyTaskQuery.listPage(i, PAGE_SIZE).forEach(legacyUserTask -> {
         String legacyUserTaskId = legacyUserTask.getId();
         ProcessInstanceEntity processInstance = findProcessInstanceKey(legacyUserTask.getProcessInstanceId());
         if (processInstance != null) {
@@ -339,8 +339,8 @@ public class HistoryMigrator {
     }
 
     long maxLegacyFlowNodeInstancesCount = legacyFlowNodeQuery.count();
-    for (int i = 0; i < maxLegacyFlowNodeInstancesCount; i = i + BATCH_SIZE - 1) {
-      legacyFlowNodeQuery.listPage(i, BATCH_SIZE).forEach(legacyFlowNode -> {
+    for (int i = 0; i < maxLegacyFlowNodeInstancesCount; i = i + PAGE_SIZE - 1) {
+      legacyFlowNodeQuery.listPage(i, PAGE_SIZE).forEach(legacyFlowNode -> {
         String legacyFlowNodeId = legacyFlowNode.getId();
         ProcessInstanceEntity processInstance = findProcessInstanceKey(legacyFlowNode.getProcessInstanceId());
         if (processInstance != null) {

@@ -25,8 +25,8 @@ class DefaultPropertiesTest {
   ProcessEngineConfigurationImpl processEngineConfiguration;
 
   @Test
-  public void shouldHaveDefaultBatchSize() {
-    assertThat(runtimeMigrator.getBatchSize()).isEqualTo(MigratorProperties.DEFAULT_BATCH_SIZE);
+  public void shouldHaveDefaultPageSize() {
+    assertThat(runtimeMigrator.getPageSize()).isEqualTo(MigratorProperties.DEFAULT_PAGE_SIZE);
   }
 
   @Test
