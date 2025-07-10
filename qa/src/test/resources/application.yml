@@ -15,7 +15,3 @@ camunda:
         username: sa
         password: sa
         driver-class-name: org.h2.Driver
-
-logging:
-  level:
-    io.camunda.migrator.qa.variables.TestVariableInterceptor: DEBUG
