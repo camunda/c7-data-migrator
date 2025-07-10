@@ -33,11 +33,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @Import(HistoryMigrationAbstractTest.HistoryCustomConfiguration.class)
-@TestPropertySource(locations = "classpath:application-history.properties")
 public abstract class HistoryMigrationAbstractTest {
 
   @Autowired
