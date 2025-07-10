@@ -48,6 +48,7 @@ public class MultiDbExtension implements BeforeAllCallback {
         .withUsername("camunda")
         .withPassword("camunda")
         .withReuse(true)
+        .withCommand("postgres", "-c", "max_connections=200")
         .withExposedPorts(5432);
     postgres.setPortBindings(List.of(POSTGRESQL_PORT + ":5432"));
     return postgres;
