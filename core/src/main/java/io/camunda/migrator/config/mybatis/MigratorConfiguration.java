@@ -14,7 +14,7 @@ import io.camunda.migrator.config.property.MigratorProperties;
 import java.util.Properties;
 import javax.sql.DataSource;
 
-import io.camunda.migrator.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import liquibase.integration.spring.MultiTenantSpringLiquibase;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.mapper.MapperFactoryBean;

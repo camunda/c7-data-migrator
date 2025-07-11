@@ -7,11 +7,13 @@
  */
 package io.camunda.migrator.qa.runtime;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_C8_DEPLOYMENT_ERROR;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
-import io.camunda.migrator.persistence.IdKeyDbModel;
-import io.camunda.migrator.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.IdKeyDbModel;
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
 import java.util.List;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
@@ -27,9 +29,6 @@ class ProcessDefinitionNotFoundTest extends RuntimeMigrationAbstractTest {
   @Autowired
   private IdKeyMapper idKeyMapper;
 
-  private final String MISSING_DEFINITION_LOG = "Skipping process instance with legacyId [%s]: "
-      + "No C8 deployment found for process ID [%s] required for instance with legacyID [%s].";
-
   @Test
   public void shouldSkipOnMissingC8Deployment() {
     // given
@@ -40,7 +39,9 @@ class ProcessDefinitionNotFoundTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then
-    logs.assertContains(String.format(MISSING_DEFINITION_LOG,  c7Instance.getId(), "simpleProcess", c7Instance.getId()));
+    logs.assertContains(
+        String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("{}", "%s"), c7Instance.getId(),
+            String.format(NO_C8_DEPLOYMENT_ERROR, "simpleProcess", c7Instance.getId())));
     assertThatProcessInstanceCountIsEqualTo(0);
     List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
@@ -61,7 +62,8 @@ class ProcessDefinitionNotFoundTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then
-    String missingDefinitionLog = String.format(MISSING_DEFINITION_LOG,  c7Instance.getId(), "simpleProcess", c7Instance.getId());
+    String missingDefinitionLog = String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("{}", "%s"),
+        c7Instance.getId(), String.format(NO_C8_DEPLOYMENT_ERROR, "simpleProcess", c7Instance.getId()));
     long logCountAfterFirstRun = logs.getEvents().stream()
         .filter(event -> event.getMessage().contains(missingDefinitionLog))
         .count();

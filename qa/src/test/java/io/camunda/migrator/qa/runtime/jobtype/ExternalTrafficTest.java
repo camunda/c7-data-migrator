@@ -8,6 +8,7 @@
 
 package io.camunda.migrator.qa.runtime.jobtype;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.EXTERNALLY_STARTED_PROCESS_INSTANCE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
@@ -40,8 +41,11 @@ public class ExternalTrafficTest extends RuntimeMigrationAbstractTest {
     assertThatProcessInstanceCountIsEqualTo(2);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(".*Process instance with key \\[(\\d+)\\] was externally started, skipping migrator job activation\\.")))
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(".*" + EXTERNALLY_STARTED_PROCESS_INSTANCE
+                .replace(".", "\\.")
+                .replace("[{}]", "\\[(\\d+)\\]"))))
         .hasSize(1);
   }
 

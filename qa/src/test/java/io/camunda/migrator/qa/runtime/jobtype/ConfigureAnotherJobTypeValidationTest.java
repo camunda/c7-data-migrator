@@ -8,6 +8,8 @@
 
 package io.camunda.migrator.qa.runtime.jobtype;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_EXECUTION_LISTENER_OF_TYPE_ERROR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
@@ -42,11 +44,17 @@ public class ConfigureAnotherJobTypeValidationTest extends RuntimeMigrationAbstr
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type 'my-job-type' found on "
-            + "start event \\[Event_1px2j50\\] in C8 process with id \\[(\\d+)\\]\\. "
-            + "At least one 'my-job-type' listener is required\\.", id))))
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(
+                SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR
+                    .replace("[{}]", "\\[%s\\]")
+                    .replace("{}", "%s"), id,
+                String.format(NO_EXECUTION_LISTENER_OF_TYPE_ERROR
+                        .replace(".", "\\.")
+                        .replace("{}", "%s")
+                        .replace("[%s]", "\\[%s\\]"),
+                    "my\\-job\\-type", "Event_1px2j50", "(\\d+)", "my\\-job\\-type"))))))
         .hasSize(1);
   }
 
@@ -67,11 +75,17 @@ public class ConfigureAnotherJobTypeValidationTest extends RuntimeMigrationAbstr
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type 'my-job-type' found on "
-            + "start event \\[Event_1px2j50\\] in C8 process with id \\[(\\d+)\\]\\. "
-            + "At least one 'my-job-type' listener is required\\.", id))))
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(
+                SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR
+                    .replace("[{}]", "\\[%s\\]")
+                    .replace("{}", "%s"), id,
+                String.format(NO_EXECUTION_LISTENER_OF_TYPE_ERROR
+                        .replace(".", "\\.")
+                        .replace("{}", "%s")
+                        .replace("[%s]", "\\[%s\\]"),
+                    "my\\-job\\-type", "Event_1px2j50", "(\\d+)", "my\\-job\\-type"))))))
         .hasSize(1);
   }
 }
