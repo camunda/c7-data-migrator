@@ -1,0 +1,17 @@
+camunda:
+  migrator:
+    auto-ddl: true
+    c7:
+      data-source:
+        auto-ddl: true
+        jdbc-url: jdbc:h2:mem:migrator
+        username: sa
+        password: sa
+        driver-class-name: org.h2.Driver
+    c8:
+      data-source:
+        auto-ddl: true
+        jdbc-url: jdbc:h2:mem:migrator
+        username: sa
+        password: sa
+        driver-class-name: org.h2.Driver

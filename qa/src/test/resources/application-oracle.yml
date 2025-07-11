@@ -8,3 +8,10 @@ camunda:
         username: camunda
         password: camunda
         driver-class-name: oracle.jdbc.OracleDriver
+    c8:
+      data-source:
+        auto-ddl: true
+        jdbc-url: jdbc:oracle:thin:@localhost:15432/ORCLDB
+        username: camunda
+        password: camunda
+        driver-class-name: oracle.jdbc.OracleDriver
