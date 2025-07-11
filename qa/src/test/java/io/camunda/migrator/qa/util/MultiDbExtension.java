@@ -7,6 +7,7 @@
  */
 package io.camunda.migrator.qa.util;
 
+import io.camunda.migrator.config.property.MigratorProperties;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,7 @@ public class MultiDbExtension implements BeforeAllCallback {
   @Override
   public void beforeAll(ExtensionContext context) {
     Environment env = SpringExtension.getApplicationContext(context).getEnvironment();
-    LOGGER.info("Source jdbcUrl set to [{}]", env.getProperty("migrator.source.jdbc-url"));
-    LOGGER.info("Target jdbcUrl set to [{}]", env.getProperty("migrator.target.jdbc-url"));
+    LOGGER.info("C7 jdbc-url set to [{}]", env.getProperty(MigratorProperties.PREFIX + "c7.data-source.jdbc-url"));
+    LOGGER.info("C8 jdbc-url set to [{}]", env.getProperty(MigratorProperties.PREFIX + "c8.data-source.jdbc-url"));
   }
 }
