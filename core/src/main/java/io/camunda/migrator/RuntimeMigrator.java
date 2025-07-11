@@ -339,21 +339,28 @@ public class RuntimeMigrator {
       throw new IllegalStateException(String.format("Couldn't find process None Start Event in C8 process with key [%s].", processDefinitionKey));
     }
 
+    // Skip job type validation if disabled
+    if (migratorProperties.isJobTypeValidationDisabled()) {
+      LOGGER.debug("Job type validation is disabled, skipping execution listener validation");
+      return;
+    }
+
+    String validationJobType = migratorProperties.getEffectiveValidationJobType();
     processInstanceStartEvents
         .forEach(startEvent -> {
           var zBExecutionListeners = startEvent.getSingleExtensionElement(ZeebeExecutionListenersImpl.class);
           if (zBExecutionListeners == null) {
-            throw new IllegalStateException(String.format("Couldn't find execution listener of type 'migrator' "
-                + "on start event [%s] in C8 process with key [%s].", startEvent.getId(), processDefinitionKey));
+            throw new IllegalStateException(String.format("Couldn't find execution listener of type '%s' "
+                + "on start event [%s] in C8 process with key [%s].", validationJobType, startEvent.getId(), processDefinitionKey));
           } else {
             boolean hasMigratorListener = zBExecutionListeners.getExecutionListeners().stream()
-                .anyMatch(listener -> "migrator".equals(listener.getType()));
+                .anyMatch(listener -> validationJobType.equals(listener.getType()));
 
             if (!hasMigratorListener) {
               throw new IllegalStateException(String.format(
-                  "No execution listener of type 'migrator' found on start event [%s] in C8 process with id [%s]. " +
-                  "At least one migrator listener is required.",
-                  startEvent.getId(), processDefinitionKey));
+                  "No execution listener of type '%s' found on start event [%s] in C8 process with id [%s]. " +
+                  "At least one '%s' listener is required.",
+                  validationJobType, startEvent.getId(), processDefinitionKey, validationJobType));
             }
           }
         });
@@ -387,7 +394,7 @@ public class RuntimeMigrator {
     List<ActivatedJob> migratorJobs = null;
     do {
       var jobQuery = camundaClient.newActivateJobsCommand()
-          .jobType("migrator")
+          .jobType(migratorProperties.getJobActivationType())
           .maxJobsToActivate(getBatchSize());
 
       String fetchMigratorJobsErrorMessage = "Error while fetching migrator jobs";
@@ -395,45 +402,55 @@ public class RuntimeMigrator {
 
       LOGGER.debug("Migrator jobs found: {}", migratorJobs.size());
 
-      migratorJobs.forEach(activatedJob -> {
-        String fetchLegacyIdErrorMessage =
-            String.format("Error while fetching legacyId for job with key:" + activatedJob.getProcessInstanceKey());
-        String legacyId = (String) callApi(() -> activatedJob.getVariable("legacyId"), fetchLegacyIdErrorMessage);
-        long processInstanceKey = activatedJob.getProcessInstanceKey();
+      migratorJobs.forEach(job -> {
+        String checkExternallyStartedErrorMessage =
+            "Error while checking if process instance was externally started for job with key: " + job.getProcessInstanceKey();
+        boolean externallyStarted = callApi(() -> !job.getVariables().contains("legacyId"), checkExternallyStartedErrorMessage);
+        if (!externallyStarted) {
+          String fetchLegacyIdErrorMessage = "Error while fetching legacyId for job with key:" + job.getProcessInstanceKey();
+          String legacyId = (String) callApi(() -> job.getVariable("legacyId"), fetchLegacyIdErrorMessage);
+          long processInstanceKey = job.getProcessInstanceKey();
 
-        var modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(processInstanceKey);
+          var modifyProcessInstance = camundaClient.newModifyProcessInstanceCommand(processInstanceKey);
 
-        // Cancel start event instance where migrator job sits to avoid executing the activities twice.
-        long elementInstanceKey = activatedJob.getElementInstanceKey();
-        modifyProcessInstance.terminateElement(elementInstanceKey);
+          // Cancel start event instance where migrator job sits to avoid executing the activities twice.
+          long elementInstanceKey = job.getElementInstanceKey();
+          modifyProcessInstance.terminateElement(elementInstanceKey);
 
-        String fetchActivityErrorMessage = "Error while fetching activity for job with legacyId:" + legacyId;
-        ActivityInstance activityInstanceTree = callApi(() -> runtimeService.getActivityInstance(legacyId), fetchActivityErrorMessage);
+          String fetchActivityErrorMessage = "Error while fetching activity for job with legacyId:" + legacyId;
+          ActivityInstance activityInstanceTree = callApi(() -> runtimeService.getActivityInstance(legacyId),
+              fetchActivityErrorMessage);
 
-        LOGGER.debug("Collecting active descendant activity instances for activityId [{}]", activityInstanceTree.getActivityId());
-        Map<String, FlowNode> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
-        LOGGER.debug("Found {} active activity instances to activate", activityInstanceMap.size());
+          LOGGER.debug("Collecting active descendant activity instances for activityId [{}]",
+              activityInstanceTree.getActivityId());
+          Map<String, FlowNode> activityInstanceMap = getActiveActivityIdsById(activityInstanceTree, new HashMap<>());
+          LOGGER.debug("Found {} active activity instances to activate", activityInstanceMap.size());
 
-        activityInstanceMap.forEach((activityInstanceId, flowNode) -> {
-          String activityId = flowNode.activityId();
-          var variableQuery = runtimeService.createVariableInstanceQuery().activityInstanceIdIn(activityInstanceId);
+          activityInstanceMap.forEach((activityInstanceId, flowNode) -> {
+            String activityId = flowNode.activityId();
+            var variableQuery = runtimeService.createVariableInstanceQuery().activityInstanceIdIn(activityInstanceId);
 
-          Map<String, Object> localVariables = new Pagination<VariableInstance>().batchSize(getBatchSize())
-              .query(variableQuery)
-              .context(context)
-              .toVariableMapSingleActivity();
+            Map<String, Object> localVariables = new Pagination<VariableInstance>().batchSize(getBatchSize())
+                .query(variableQuery)
+                .context(context)
+                .toVariableMapSingleActivity();
 
-          String subProcessInstanceId = flowNode.subProcessInstanceId();
-          if (subProcessInstanceId != null) {
-            localVariables.put("legacyId", subProcessInstanceId);
-          }
+            String subProcessInstanceId = flowNode.subProcessInstanceId();
+            if (subProcessInstanceId != null) {
+              localVariables.put("legacyId", subProcessInstanceId);
+            }
 
-          modifyProcessInstance.activateElement(activityId).withVariables(localVariables, activityId);
-        });
+            modifyProcessInstance.activateElement(activityId).withVariables(localVariables, activityId);
+          });
 
-        String batchUpdatedActivitiesErrorMessage = "Error while activating jobs";
-        callApi(() -> ((ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3) modifyProcessInstance).execute(), batchUpdatedActivitiesErrorMessage);
-        // no need to complete the job since the modification canceled the migrator job in the start event
+          String batchUpdatedActivitiesErrorMessage = "Error while activating jobs";
+          callApi(
+              () -> ((ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3) modifyProcessInstance).execute(),
+              batchUpdatedActivitiesErrorMessage);
+          // no need to complete the job since the modification canceled the migrator job in the start event
+        } else {
+          LOGGER.info("Process instance with key [{}] was externally started, skipping migrator job activation.", job.getProcessInstanceKey());
+        }
       });
     } while (!migratorJobs.isEmpty());
   }

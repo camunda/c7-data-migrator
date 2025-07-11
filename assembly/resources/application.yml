@@ -23,6 +23,14 @@ camunda:
     # Optional property to configure if the migrator schema is created on `C7` or `C8`. Default is 'C7'.
     # data-source: C7
 
+    # Job type for actual job activation (used for validation and activation unless validation-job-type is defined)
+    # job-type: migrator
+
+    # Job type for validation purposes (optional - falls back to job-type if not defined)
+    # Set to 'DISABLED' to disable job type validation entirely
+    # You can use FEEL expressions (starting with '=')
+    # validation-job-type: =if legacyId then "migrator" else "noop"
+
     # Camunda 7 configuration
     c7:
       data-source:

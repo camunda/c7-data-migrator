@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0mijxg3" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.35.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
+  <bpmn:process id="migratorListenerCustomType" isExecutable="true" camunda:historyTimeToLive="1">
+    <bpmn:userTask id="Activity_016bbjm">
+      <bpmn:incoming>Flow_0wuv7y3</bpmn:incoming>
+      <bpmn:outgoing>Flow_1w6pba0</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_0p2k78b">
+      <bpmn:incoming>Flow_1w6pba0</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1w6pba0" sourceRef="Activity_016bbjm" targetRef="Event_0p2k78b" />
+    <bpmn:startEvent id="Event_1px2j50">
+      <bpmn:outgoing>Flow_0wuv7y3</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0wuv7y3" sourceRef="Event_1px2j50" targetRef="Activity_016bbjm" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="noMigratorListener">
+      <bpmndi:BPMNShape id="Activity_184um7h_di" bpmnElement="Activity_016bbjm">
+        <dc:Bounds x="270" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0p2k78b_di" bpmnElement="Event_0p2k78b">
+        <dc:Bounds x="422" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1px2j50_di" bpmnElement="Event_1px2j50">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1w6pba0_di" bpmnElement="Flow_1w6pba0">
+        <di:waypoint x="370" y="120" />
+        <di:waypoint x="422" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wuv7y3_di" bpmnElement="Flow_0wuv7y3">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="270" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
