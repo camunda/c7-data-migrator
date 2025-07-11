@@ -25,7 +25,6 @@ import org.camunda.bpm.engine.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 
 public class Pagination<T> {
 
@@ -34,8 +33,9 @@ public class Pagination<T> {
   protected int batchSize;
   protected Supplier<Long> maxCount;
   protected Function<Integer, List<T>> page;
-  private Query<?, T> query;
-  private ApplicationContext context;
+  protected Query<?, T> query;
+  protected ApplicationContext context;
+  protected List<VariableInterceptor> configuredVariableInterceptors;
 
 
   public Pagination<T> batchSize(int batchSize) {
@@ -60,6 +60,11 @@ public class Pagination<T> {
 
   public Pagination<T> context(ApplicationContext context) {
     this.context = context;
+    return this;
+  }
+
+  public Pagination<T> variableInterceptors(List<VariableInterceptor> variableInterceptors) {
+    this.configuredVariableInterceptors = variableInterceptors;
     return this;
   }
 
@@ -120,28 +125,29 @@ public class Pagination<T> {
    * Using streams might lead to undesired {@link NullPointerException}s.
    */
   protected void processVariables(BiConsumer<VariableInstanceEntity, VariableInvocation> consumer) {
-    List<VariableInterceptor> interceptors = getVariableInterceptorsOrdered();
     toList().forEach(e -> {
       var variable = (VariableInstanceEntity) e;
       VariableInvocation variableInvocation = new VariableInvocation((VariableInstanceEntity) e);
-      if (interceptors != null && !interceptors.isEmpty()) {
-        interceptors.forEach(i -> {
-          try {
-            i.execute(variableInvocation);
-          } catch (Exception ex) {
-            throw new VariableInterceptorException("An error occurred during variable transformation.", ex);
-          }
-        });
-      }
+      executeInterceptors(variableInvocation);
       consumer.accept(variable, variableInvocation);
     });
   }
 
-  protected List<VariableInterceptor> getVariableInterceptorsOrdered() {
-    List<VariableInterceptor> interceptors = new ArrayList<>(
-        context.getBeansOfType(VariableInterceptor.class).values());
-    AnnotationAwareOrderComparator.sort(interceptors);
-    return interceptors;
+  private void executeInterceptors(VariableInvocation variableInvocation) {
+    List<VariableInterceptor> interceptors = configuredVariableInterceptors;
+    if (hasInterceptors(interceptors)) {
+      interceptors.forEach(i -> {
+        try {
+          i.execute(variableInvocation);
+        } catch (Exception ex) {
+          throw new VariableInterceptorException("An error occurred during variable transformation.", ex);
+        }
+      });
+    }
+  }
+
+  protected boolean hasInterceptors(List<VariableInterceptor> interceptors) {
+    return interceptors != null && !interceptors.isEmpty();
   }
 
 }

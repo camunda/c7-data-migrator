@@ -17,6 +17,7 @@ A tool for migrating Camunda 7 process instances and related data to Camunda 8. 
 - [Quick Start](#quick-start)
 - [Supported Databases](#supported-databases)
 - [Configuration](#configuration)
+- [Variable transformation](#variable-transformation)
 - [Migration Limitations](#migration-limitations)
 - [Troubleshooting](#troubleshooting)
 - [Migration Process](#migration-process)
@@ -262,33 +263,27 @@ The `VariableInterceptor` interface allows you to define custom logic that execu
 
 ### How to Implement a VariableInterceptor
 
-1. Create a class that implements `VariableInterceptor`.
-2. Annotate your class with `@Component` to register it as a Spring bean.
-3. Override the `execute(VariableInvocation invocation)` method to add your logic.
+1. Create a new Maven project with the provided `pom.xml` structure
+2. Add a dependency on `c7-data-migrator-core` (scope: provided)
+3. Implement the `VariableInterceptor` interface
+4. Add setter methods for any configurable properties
+5. Package as JAR and deploy to the `userlib` folder
+6. Configure in `application.yml`
 
-**Example:**
-```java
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
-@Component
-@Order(100) // Optional: controls execution order if multiple interceptors exist
-public class MyVariableInterceptor implements VariableInterceptor {
-  @Override
-  public void execute(VariableInvocation invocation) throws Exception {
-    Object value = invocation.getC7Variable().getValue();
-    // Custom logic here
-    invocation.setVariableValue(value); // Optionally modify the value
-  }
-}
+```yaml
+ Variable interceptor plugins configuration
+ These plugins can be packaged in JARs and dropped in the userlib folder
+migrator.interceptors:
+  - class-name: com.example.MyCustomVariableInterceptor
+  - class-name: com.example.AnotherVariableInterceptor
 ```
+
+Example of a custom variable interceptor can be find in the ./examples/variable-interceptor directory.
 
 ### Execution Order
 
 - If multiple interceptors are present, their execution order is determined by the `@Order` annotation (lower values run first).
-- If `@Order` is not specified, the default order is used.
--
-
+- When the interceptor in not a Spring bean, the default order is used and added to last in the list.
 
 ---
 
@@ -301,10 +296,8 @@ The following interceptors are already implemented in the project:
 
 2. **DateVariableInterceptor**
 - Converts Camunda 7 Date variables to Camunda 8 compatible format `yyyy-MM-dd'T'HH:mm:ss.SSSZ`.
+- Uses by default the timezone of the JVM settings.
 - The interceptor is ordered with priority 10 to ensure it runs after the default interceptor.
-
-*To see all registered interceptors and their order, you can fetch them from the Spring context as described previously.*
-
 
 ## Migration Limitations
 

@@ -9,6 +9,8 @@ package io.camunda.migrator.config.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.List;
+
 @ConfigurationProperties(MigratorProperties.PREFIX)
 public class MigratorProperties {
 
@@ -27,6 +29,8 @@ public class MigratorProperties {
 
   protected C7Properties c7;
   protected C8Properties c8;
+
+  protected List<InterceptorProperty> interceptors;
 
   public int getBatchSize() {
     return batchSize;
@@ -76,4 +80,11 @@ public class MigratorProperties {
     this.dataSource = dataSource;
   }
 
+  public List<InterceptorProperty> getInterceptors() {
+    return interceptors;
+  }
+
+  public void setInterceptors(List<InterceptorProperty> interceptors) {
+    this.interceptors = interceptors;
+  }
 }

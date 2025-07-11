@@ -23,6 +23,15 @@ camunda:
     # Optional property to configure if the migrator schema is created on `C7` or `C8`. Default is 'C7'.
     # data-source: C7
 
+    # Variable interceptor plugins configuration
+    # These plugins can be packaged in JARs and dropped in the userlib folder
+    # interceptors:
+    #   - class-name: com.example.MyCustomVariableInterceptor
+    #     properties:
+    #       someProperty: someValue
+    #       anotherProperty: anotherValue
+    #   - class-name: com.example.AnotherVariableInterceptor
+
     # Camunda 7 configuration
     c7:
       data-source:

@@ -19,6 +19,7 @@ import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.search.response.ProcessDefinition;
 import io.camunda.migrator.config.property.MigratorProperties;
+import io.camunda.migrator.interceptor.VariableInterceptor;
 import io.camunda.migrator.exception.VariableInterceptorException;
 import io.camunda.migrator.impl.Pagination;
 import io.camunda.migrator.impl.util.PrintUtils;
@@ -82,6 +83,9 @@ public class RuntimeMigrator {
 
   @Autowired
   protected ApplicationContext context;
+
+  @Autowired
+  private List<VariableInterceptor> configuredVariableInterceptors;
 
 
   protected MigratorMode mode = MIGRATE;
@@ -269,6 +273,7 @@ public class RuntimeMigrator {
         .batchSize(getBatchSize())
         .query(variableQuery)
         .context(context)
+        .variableInterceptors(configuredVariableInterceptors)
         .toVariableMapAll();
     return allVariables;
   }
@@ -421,6 +426,7 @@ public class RuntimeMigrator {
           Map<String, Object> localVariables = new Pagination<VariableInstance>().batchSize(getBatchSize())
               .query(variableQuery)
               .context(context)
+              .variableInterceptors(configuredVariableInterceptors)
               .toVariableMapSingleActivity();
 
           String subProcessInstanceId = flowNode.subProcessInstanceId();
