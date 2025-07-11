@@ -12,14 +12,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(MigratorProperties.PREFIX)
 public class MigratorProperties {
 
-  public static final int DEFAULT_BATCH_SIZE = 500;
+  public static final int DEFAULT_PAGE_SIZE = 500;
   public static final String PREFIX = "camunda.migrator";
 
   public enum DataSource {
     C7, C8
   }
 
-  protected Integer batchSize = DEFAULT_BATCH_SIZE;
+  protected Integer pageSize = DEFAULT_PAGE_SIZE;
   protected DataSource dataSource = DataSource.C7;
 
   protected Boolean autoDdl;
@@ -28,12 +28,12 @@ public class MigratorProperties {
   protected C7Properties c7;
   protected C8Properties c8;
 
-  public int getBatchSize() {
-    return batchSize;
+  public int getPageSize() {
+    return pageSize;
   }
 
-  public void setBatchSize(int batchSize) {
-    this.batchSize = batchSize;
+  public void setPageSize(int pageSize) {
+    this.pageSize = pageSize;
   }
 
   public C7Properties getC7() {

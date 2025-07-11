@@ -11,8 +11,8 @@ camunda:
     # rest-address: http://localhost:8088
 
   migrator:
-    # Number of records to process in each migration batch
-    # batch-size: 500
+    # Number of records to process per each page
+    # page-size: 500
 
     # Automatically create/update database schema
     auto-ddl: true

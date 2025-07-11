@@ -26,9 +26,9 @@ import org.springframework.test.context.TestPropertySource;
 @ExtendWith(OutputCaptureExtension.class)
 @ActiveProfiles("logging-test")
 @TestPropertySource(properties = {
-    "camunda.migrator.batch-size=2"
+    "camunda.migrator.page-size=2"
 })
-class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
+class PageSizeConfigurationTest extends RuntimeMigrationAbstractTest {
 
   public static final String MIGRATOR_JOBS_FOUND = "Migrator jobs found: ";
 
@@ -48,10 +48,10 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
     // then
     List<ProcessInstance> processInstances = camundaClient.newProcessInstanceSearchRequest().execute().items();
     assertThat(processInstances.size()).isEqualTo(5);
-    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 0, batch size: 2");
-    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 2, batch size: 2");
-    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 4, batch size: 2");
-    Matcher matcher = Pattern.compile("Method: #validateProcessInstanceState, max count: 1, offset: 0, batch size: 2").matcher(output.getOut());
+    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 0, page size: 2");
+    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 2, page size: 2");
+    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 5, offset: 4, page size: 2");
+    Matcher matcher = Pattern.compile("Method: #validateProcessInstanceState, max count: 1, offset: 0, page size: 2").matcher(output.getOut());
     assertThat(matcher.results().count()).isEqualTo(5);
   }
 
@@ -99,8 +99,8 @@ class BatchConfigurationTest extends RuntimeMigrationAbstractTest {
 
     Matcher matcher = Pattern.compile(MIGRATOR_JOBS_FOUND + "1").matcher(output.getOut());
     assertThat(matcher.results().count()).isEqualTo(3);
-    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 1, offset: 0, batch size: 2");
-    assertThat(output.getOut()).contains("Method: #validateProcessInstanceState, max count: 3, offset: 0, batch size: 2");
+    assertThat(output.getOut()).contains("Method: #fetchProcessInstancesToMigrate, max count: 1, offset: 0, page size: 2");
+    assertThat(output.getOut()).contains("Method: #validateProcessInstanceState, max count: 3, offset: 0, page size: 2");
   }
 
   private void deployModels(String rootId, String level1Id, String level2Id) {
