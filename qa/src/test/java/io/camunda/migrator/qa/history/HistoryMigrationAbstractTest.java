@@ -14,7 +14,7 @@ import io.camunda.db.rdbms.sql.PurgeMapper;
 import io.camunda.db.rdbms.write.service.RdbmsPurger;
 import io.camunda.migrator.HistoryMigrator;
 import io.camunda.migrator.config.C8DataSourceConfigured;
-import io.camunda.migrator.qa.runtime.ProcessDefinitionDeployer;
+import io.camunda.migrator.qa.util.ProcessDefinitionDeployer;
 import io.camunda.migrator.qa.util.WithMultiDb;
 import io.camunda.search.entities.FlowNodeInstanceEntity;
 import io.camunda.search.entities.ProcessInstanceEntity;
