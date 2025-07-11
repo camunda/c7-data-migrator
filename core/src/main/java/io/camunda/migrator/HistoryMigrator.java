@@ -274,7 +274,7 @@ public class HistoryMigrator {
         ProcessInstanceEntity processInstance = findProcessInstanceKey(legacyProcessInstanceId);
         if (processInstance != null) {
           Long processInstanceKey = processInstance.processInstanceKey();
-          Long scopeKey = findFlowNodeKey(legacyVariable.getActivityInstanceId()); // TODO does this cover scope correctly?
+          Long scopeKey = findScopeKey(legacyVariable.getActivityInstanceId()); // TODO does this cover scope correctly?
           if (scopeKey != null) {
             LOGGER.info("Migration of legacy variable with id '{}' completed.", legacyVariableId);
             VariableDbModel dbModel = variableConverter.apply(legacyVariable, processInstanceKey, scopeKey);
@@ -430,6 +430,33 @@ public class HistoryMigrator {
       return flowNodes.get(0).flowNodeInstanceKey();
     } else {
       return null;
+    }
+  }
+
+  private Long findScopeKey(String instanceId) {
+    if (instanceId == null) {
+      return null;
+    }
+
+    Long key = idKeyMapper.findKeyById(instanceId);
+    if (key == null) {
+      return null;
+    }
+
+    List<FlowNodeInstanceEntity> flowNodes = flowNodeMapper.search(
+        FlowNodeInstanceDbQuery.of(b -> b.filter(f -> f.flowNodeInstanceKeys(key))));
+
+    if (!flowNodes.isEmpty()) {
+      return flowNodes.get(0).flowNodeInstanceKey();
+    } else {
+      // consider process instance scope
+      List<ProcessInstanceEntity> processInstances = processInstanceMapper.search(
+          ProcessInstanceDbQuery.of(b -> b.filter(value -> value.processInstanceKeys(key))));
+      if (!processInstances.isEmpty()) {
+        return processInstances.get(0).processInstanceKey();
+      } else {
+        return null;
+      }
     }
   }
 
