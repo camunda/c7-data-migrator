@@ -217,7 +217,7 @@ camunda.migrator:
 **Important Notes:**
 - When `validation-job-type` is not defined, `job-type` is used for both purposes
 - The `job-type` is always used for job activation
-- The `validation-job-type` can be a FEEL expression (starts with `=`) for dynamic validation
+- The `validation-job-type` can be a FEEL expression (starts with `=`)
 - Set `validation-job-type` to `DISABLED` to disable job type validation entirely
 - Use FEEL expressions only for validation, not for job activation since on job activation, the FEEL expression is already evaluated to a static value
 - Variables referenced in FEEL expressions must exist in the process instance context

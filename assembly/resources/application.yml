@@ -28,7 +28,7 @@ camunda:
 
     # Job type for validation purposes (optional - falls back to job-type if not defined)
     # Set to 'DISABLED' to disable job type validation entirely
-    # You can use FEEL expressions (starting with '=') for dynamic validation
+    # You can use FEEL expressions (starting with '=')
     # validation-job-type: =if legacyId then "migrator" else "noop"
 
     # Camunda 7 configuration
