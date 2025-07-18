@@ -15,7 +15,7 @@ import io.camunda.client.api.command.ClientException;
 import io.camunda.client.api.search.response.ProcessInstance;
 import io.camunda.client.api.search.response.Variable;
 import io.camunda.migrator.RuntimeMigrator;
-import io.camunda.migrator.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.migrator.qa.util.ProcessDefinitionDeployer;
 import io.camunda.migrator.qa.util.WithMultiDb;
 import io.camunda.process.test.api.CamundaSpringProcessTest;

@@ -10,6 +10,7 @@ package io.camunda.migrator.qa.runtime.datasource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.migrator.qa.runtime.RuntimeMigrationAbstractTest;
 import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.Test;
@@ -19,13 +20,14 @@ import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
     "camunda.migrator.table-prefix=MY_PREFIX_",
-    "logging.level.io.camunda.migrator.persistence.IdKeyMapper=DEBUG"
+    "logging.level.io.camunda.migrator.impl.persistence.IdKeyMapper=DEBUG"
 })
 public class MigratorTablePrefixTest extends RuntimeMigrationAbstractTest {
 
+  protected static final String TABLE_PREFIX_INSERT_PATTERN = ".*INSERT INTO MY_PREFIX_MIGRATION_MAPPING.*";
+
   @RegisterExtension
-  protected LogCapturer logs = LogCapturer.create()
-      .captureForLogger("io.camunda.migrator.persistence.IdKeyMapper", Level.DEBUG);
+  protected LogCapturer logs = LogCapturer.create().captureForType(IdKeyMapper.class, Level.DEBUG);
 
   @Test
   public void shouldMigrateWithMigratorTablePrefix() {
@@ -41,7 +43,7 @@ public class MigratorTablePrefixTest extends RuntimeMigrationAbstractTest {
 
     var events = logs.getEvents();
     assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(".*INSERT INTO MY_PREFIX_MIGRATION_MAPPING.*")))
+        .matches(TABLE_PREFIX_INSERT_PATTERN)))
         .hasSize(1);
   }
 

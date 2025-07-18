@@ -5,9 +5,9 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.persistence;
+package io.camunda.migrator.impl.persistence;
 
-import io.camunda.migrator.persistence.IdKeyMapper.TYPE;
+import io.camunda.migrator.impl.persistence.IdKeyMapper.TYPE;
 import java.util.Date;
 import java.util.Objects;
 

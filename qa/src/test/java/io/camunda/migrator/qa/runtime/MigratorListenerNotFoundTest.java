@@ -8,6 +8,8 @@
 
 package io.camunda.migrator.qa.runtime;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_EXECUTION_LISTENER_OF_TYPE_ERROR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
@@ -37,11 +39,13 @@ public class MigratorListenerNotFoundTest extends RuntimeMigrationAbstractTest {
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type 'migrator' found on start event \\[Event_1px2j50\\] "
-            + "in C8 process with id \\[\\d+\\]\\. At least one 'migrator' listener is required\\.", id))))
-        .hasSize(1);
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(
+                SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("[{}]", "\\[%s\\]").replace("{}", "%s"), id,
+                String.format(
+                    NO_EXECUTION_LISTENER_OF_TYPE_ERROR.replace(".", "\\.").replace("[%s]", "\\[%s\\]"),
+                    "migrator", "Event_1px2j50", "(\\d+)", "migrator")))))).hasSize(1);
   }
 
   @Test
@@ -61,11 +65,13 @@ public class MigratorListenerNotFoundTest extends RuntimeMigrationAbstractTest {
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type 'migrator' found on start event \\[Event_1px2j50\\] "
-            + "in C8 process with id \\[\\d+\\]\\. At least one 'migrator' listener is required\\.", id))))
-        .hasSize(1);
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(
+                SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("[{}]", "\\[%s\\]").replace("{}", "%s"), id,
+                String.format(
+                    NO_EXECUTION_LISTENER_OF_TYPE_ERROR.replace(".", "\\.").replace("[%s]", "\\[%s\\]"),
+                    "migrator", "Event_1px2j50", "(\\d+)", "migrator")))))).hasSize(1);
   }
 
   @Test

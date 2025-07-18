@@ -8,6 +8,8 @@
 
 package io.camunda.migrator.qa.runtime.jobtype;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_EXECUTION_LISTENER_OF_TYPE_ERROR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
@@ -22,6 +24,8 @@ import org.springframework.test.context.TestPropertySource;
     "camunda.migrator.validation-job-type==if legacyId != null then \"migrator\" else \"noop\""
 })
 public class SeparateJobTypesValidationTest extends RuntimeMigrationAbstractTest {
+
+  protected static final String VALIDATION_JOB_TYPE = "=if legacyId != null then \"migrator\" else \"noop\"";
 
   @RegisterExtension
   protected LogCapturer logs = LogCapturer.create().captureForType(RuntimeMigrator.class);
@@ -43,11 +47,15 @@ public class SeparateJobTypesValidationTest extends RuntimeMigrationAbstractTest
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type '=if legacyId != null then \"migrator\" else \"noop\"' found on "
-            + "start event \\[Event_1px2j50\\] in C8 process with id \\[(\\d+)\\]\\. "
-            + "At least one '=if legacyId != null then \"migrator\" else \"noop\"' listener is required\\.", id))))
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR
+                    .replace("[{}]", "\\[%s\\]")
+                    .replace("{}", "%s"), id,
+                String.format(NO_EXECUTION_LISTENER_OF_TYPE_ERROR
+                        .replace(".", "\\.")
+                        .replace("[%s]", "\\[%s\\]"),
+                    VALIDATION_JOB_TYPE, "Event_1px2j50", "(\\d+)", VALIDATION_JOB_TYPE))))))
         .hasSize(1);
   }
 
@@ -68,11 +76,15 @@ public class SeparateJobTypesValidationTest extends RuntimeMigrationAbstractTest
     assertThatProcessInstanceCountIsEqualTo(0);
 
     var events = logs.getEvents();
-    assertThat(events.stream().filter(event -> event.getMessage()
-        .matches(String.format(".*Skipping process instance with legacyId \\[%s\\]: "
-            + "No execution listener of type '=if legacyId != null then \"migrator\" else \"noop\"' found on "
-            + "start event \\[Event_1px2j50\\] in C8 process with id \\[(\\d+)\\]\\. "
-            + "At least one '=if legacyId != null then \"migrator\" else \"noop\"' listener is required\\.", id))))
+    assertThat(events.stream()
+        .filter(event -> event.getMessage()
+            .matches(String.format(".*" + String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR
+                    .replace("[{}]", "\\[%s\\]")
+                    .replace("{}", "%s"), id,
+                String.format(NO_EXECUTION_LISTENER_OF_TYPE_ERROR
+                        .replace(".", "\\.")
+                        .replace("[%s]", "\\[%s\\]"),
+                    VALIDATION_JOB_TYPE, "Event_1px2j50", "(\\d+)", VALIDATION_JOB_TYPE))))))
         .hasSize(1);
   }
 

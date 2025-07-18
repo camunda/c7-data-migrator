@@ -8,6 +8,7 @@
 package io.camunda.migrator.qa.runtime.variables;
 
 import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
 import static io.camunda.process.test.api.assertions.ElementSelectors.byId;
 import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.byProcessId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,8 +115,8 @@ public class YamlVariableInterceptorTest extends RuntimeMigrationAbstractTest {
     // run migration first time
     runtimeMigrator.start();
 
-    assertThat(output.getOut()).contains("Skipping process instance with legacyId:");
-    assertThat(output.getOut()).contains("due to: An error occurred during variable transformation");
+    assertThat(output.getOut()).contains(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace(" [{}]: {}", ""));
+    assertThat(output.getOut()).contains("due to: Variable interceptor YamlVariableInterceptor failed for variable yamlExFlag");
 
     // fix the variable to allow successful migration
     runtimeService.setVariable(simpleProcessInstance.getId(), "yamlExFlag", false);

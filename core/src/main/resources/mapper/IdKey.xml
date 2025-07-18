@@ -7,7 +7,7 @@
   ~ except in compliance with the Camunda License 1.0.
   -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="io.camunda.migrator.persistence.IdKeyMapper">
+<mapper namespace="io.camunda.migrator.impl.persistence.IdKeyMapper">
 
   <select id="findSkippedCount" resultType="long">
     SELECT COUNT(ID) FROM (
@@ -15,7 +15,7 @@
     )
   </select>
 
-  <select id="findSkipped" resultType="io.camunda.migrator.persistence.IdKeyDbModel">
+  <select id="findSkipped" resultType="io.camunda.migrator.impl.persistence.IdKeyDbModel">
     <include refid="findSkippedByQueryCriteriaSql"/>
   </select>
 
@@ -30,7 +30,7 @@
     FROM ${prefix}MIGRATION_MAPPING
   </select>
 
-  <update id="updateKeyById" parameterType="io.camunda.migrator.persistence.IdKeyDbModel">
+  <update id="updateKeyById" parameterType="io.camunda.migrator.impl.persistence.IdKeyDbModel">
     UPDATE ${prefix}MIGRATION_MAPPING
     SET INSTANCE_KEY = #{instanceKey, jdbcType=BIGINT}
     WHERE ID = #{id, jdbcType=VARCHAR}
@@ -61,7 +61,7 @@
 
   <insert
     id="insert"
-    parameterType="io.camunda.migrator.persistence.IdKeyDbModel"
+    parameterType="io.camunda.migrator.impl.persistence.IdKeyDbModel"
     flushCache="true">
     INSERT INTO ${prefix}MIGRATION_MAPPING (ID, INSTANCE_KEY, START_DATE, TYPE)
     VALUES (#{id, jdbcType=VARCHAR}, #{instanceKey, jdbcType=BIGINT}, #{startDate, jdbcType=TIMESTAMP}, #{type, jdbcType=VARCHAR})

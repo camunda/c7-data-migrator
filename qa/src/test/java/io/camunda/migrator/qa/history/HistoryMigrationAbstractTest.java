@@ -13,7 +13,7 @@ import io.camunda.db.rdbms.sql.PurgeMapper;
 import io.camunda.db.rdbms.write.service.RdbmsPurger;
 import io.camunda.migrator.HistoryMigrator;
 import io.camunda.migrator.config.C8DataSourceConfigured;
-import io.camunda.migrator.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.migrator.qa.util.ProcessDefinitionDeployer;
 import io.camunda.migrator.qa.util.WithMultiDb;
 import io.camunda.migrator.qa.util.WithSpringProfile;

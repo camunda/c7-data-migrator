@@ -23,6 +23,11 @@ import io.camunda.migrator.config.property.MigratorProperties;
 import io.camunda.migrator.converter.ConverterConfiguration;
 import io.camunda.migrator.impl.DateVariableInterceptor;
 import io.camunda.migrator.impl.DefaultVariableInterceptor;
+import io.camunda.migrator.impl.clients.C7Client;
+import io.camunda.migrator.impl.clients.C8Client;
+import io.camunda.migrator.impl.clients.DbClient;
+import io.camunda.migrator.impl.VariableService;
+import io.camunda.migrator.impl.RuntimeValidator;
 import java.util.Optional;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
@@ -51,6 +56,11 @@ import org.springframework.transaction.PlatformTransactionManager;
     ConverterConfiguration.class,
     InterceptorConfiguration.class,
     AutoDeployer.class,
+    C7Client.class,
+    C8Client.class,
+    DbClient.class,
+    VariableService.class,
+    RuntimeValidator.class,
     HistoryMigrator.class,
     RuntimeMigrator.class
 })

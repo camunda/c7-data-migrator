@@ -19,14 +19,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 class DefaultPropertiesTest {
 
   @Autowired
-  private RuntimeMigrator runtimeMigrator;
+  protected MigratorProperties migratorProperties;
 
   @Autowired
   ProcessEngineConfigurationImpl processEngineConfiguration;
 
   @Test
   public void shouldHaveDefaultPageSize() {
-    assertThat(runtimeMigrator.getPageSize()).isEqualTo(MigratorProperties.DEFAULT_PAGE_SIZE);
+    assertThat(migratorProperties.getPageSize()).isEqualTo(MigratorProperties.DEFAULT_PAGE_SIZE);
   }
 
   @Test

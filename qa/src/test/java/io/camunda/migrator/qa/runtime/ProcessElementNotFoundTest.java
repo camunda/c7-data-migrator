@@ -8,11 +8,13 @@
 
 package io.camunda.migrator.qa.runtime;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.FLOW_NODE_NOT_EXISTS_ERROR;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
-import io.camunda.migrator.persistence.IdKeyDbModel;
-import io.camunda.migrator.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.IdKeyDbModel;
+import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -37,8 +39,9 @@ public class ProcessElementNotFoundTest  extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then
-    logs.assertContains(String.format("Skipping process instance with legacyId [%s]: "
-        + "Flow node with id [userTaskId] doesn't exist in the equivalent deployed C8 model.", c7Instance.getId()));
+    logs.assertContains(
+        String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("{}", "%s"), c7Instance.getId(),
+            String.format(FLOW_NODE_NOT_EXISTS_ERROR, "userTaskId")));
     assertThatProcessInstanceCountIsEqualTo(0);
     List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);

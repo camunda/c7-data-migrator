@@ -20,23 +20,29 @@ public class TestVariableInterceptor implements VariableInterceptor {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(TestVariableInterceptor.class);
 
+  protected static final String INTERCEPTOR_START_MESSAGE = "Start {} execution for variable: {}";
+  protected static final String INTERCEPTOR_END_MESSAGE = "End {} execution for variable: {}";
+  protected static final String HELLO_FROM_INTERCEPTOR_MESSAGE = "Hello from interceptor";
+  protected static final String BYE_FROM_INTERCEPTOR_MESSAGE = "Bye from interceptor";
+  protected static final String EXPECTED_EXCEPTION_MESSAGE = "Expected exception from Interceptor";
+
   @Override
   public void execute(VariableInvocation invocation) throws Exception {
-    LOGGER.debug("Start {} execution for variable: {}", TestVariableInterceptor.class,
+    LOGGER.debug(INTERCEPTOR_START_MESSAGE, TestVariableInterceptor.class,
         invocation.getC7Variable().getName());
     if (invocation.getC7Variable().getName().equals("varIntercept")) {
-      LOGGER.info("Hello from interceptor");
+      LOGGER.info(HELLO_FROM_INTERCEPTOR_MESSAGE);
       invocation.setVariableValue("Hello");
     }
 
     if (invocation.getC7Variable().getName().equals("exFlag")) {
       if (Boolean.valueOf(invocation.getC7Variable().getValue().toString()) == true) {
-        throw new RuntimeException("Expected exception from Interceptor");
+        throw new RuntimeException(EXPECTED_EXCEPTION_MESSAGE);
       } else {
-        LOGGER.info("Bye from interceptor");
+        LOGGER.info(BYE_FROM_INTERCEPTOR_MESSAGE);
       }
     }
-    LOGGER.debug("End {} execution for variable: {}", TestVariableInterceptor.class,
+    LOGGER.debug(INTERCEPTOR_END_MESSAGE, TestVariableInterceptor.class,
         invocation.getC7Variable().getName());
   }
 }

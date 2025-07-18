@@ -7,6 +7,7 @@
  */
 package io.camunda.migrator;
 
+import io.camunda.migrator.config.property.MigratorProperties;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 class PageSizeConfigurationPropertyTest {
 
   @Autowired
-  private RuntimeMigrator runtimeMigrator;
+  protected MigratorProperties migratorProperties;
 
   @Test
   public void shouldSetPageSize() {
 
-    Assertions.assertThat(runtimeMigrator.getPageSize()).isEqualTo(2);
+    Assertions.assertThat(migratorProperties.getPageSize()).isEqualTo(2);
   }
 
 }
