@@ -21,7 +21,7 @@ package io.camunda.migrator.interceptor;
  * &#64;Component
  * public class MyVariableInterceptor implements VariableInterceptor {
  *   &#64;Override
- *   public void execute(VariableInvocation invocation) throws Exception {
+ *   public void execute(VariableInvocation invocation) {
  *     // Custom logic before or after variable access
  *     Object value = invocation.getC7Variable().getValue();
  *     // Modify or log the value as needed
@@ -32,5 +32,5 @@ package io.camunda.migrator.interceptor;
  */
 public interface VariableInterceptor {
 
-  void execute(VariableInvocation invocation) throws Exception;
+  void execute(VariableInvocation invocation);
 }

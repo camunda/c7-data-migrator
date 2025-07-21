@@ -22,7 +22,7 @@ public class YamlVariableInterceptor implements VariableInterceptor {
   private String targetVariable = "yamlVar";
 
   @Override
-  public void execute(VariableInvocation invocation) throws Exception {
+  public void execute(VariableInvocation invocation) {
     LOGGER.debug("Start {} execution for variable: {}", YamlVariableInterceptor.class,
         invocation.getC7Variable().getName());
 

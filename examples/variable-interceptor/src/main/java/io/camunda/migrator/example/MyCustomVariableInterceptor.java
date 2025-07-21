@@ -33,7 +33,7 @@ public class MyCustomVariableInterceptor implements VariableInterceptor {
     private String prefix = "CUSTOM_";
 
     @Override
-    public void execute(VariableInvocation invocation) throws Exception {
+    public void execute(VariableInvocation invocation) {
         VariableInstanceEntity variable = invocation.getC7Variable();
         if (enableLogging) {
             LOGGER.info("Processing variable: {} with value: {}",

@@ -363,9 +363,82 @@ logging:
 
 ## Variable transformation
 
+The C7 Data Migrator automatically handles the transformation of Camunda 7 variables to Camunda 8 compatible formats during migration. This section documents which variable types are supported and how they are transformed.
+
+For complete details on Camunda 7 variable types, see the [official Camunda 7 documentation](https://docs.camunda.org/manual/latest/user-guide/process-engine/variables/#supported-variable-values).
+
+### Supported Variable Types
+
+The following table shows how different Camunda 7 variable types are handled during migration:
+
+| Camunda 7 Type                     | Example Value | Migration Behavior | Camunda 8 Result     |
+|------------------------------------|---------------|-------------------|----------------------|
+| **String**                         | `"hello world"` | Direct migration | String value         |
+| **Boolean**                        | `true`, `false` | Direct migration | Boolean value        |
+| **Integer**                        | `42`, `1234` | Direct migration | Number value         |
+| **Long**                           | `123456789L` | Direct migration | Number value         |
+| **Double**                         | `3.14159` | Direct migration | Number value         |
+| **Short**                          | `(short) 1` | Direct migration | Number value         |
+| **Null**                           | `null` | Direct migration | Null value           |
+| **Date**                           | `new Date()` | Converted to ISO format | String (ISO 8601)    |
+| **Java Object serialized as JSON** | Serialized JSON | Converted to Map | JSON object |
+| **Spin JSON**                      | `SpinJsonNode` | Converted to Map | JSON object |
+| **Spin XML**                       | `SpinXmlElement` | Converted to String | String (raw XML)     |
+| **Java Object serialized as XML**  | XML serialized object | Converted to String | String (raw XML)     |
+
+### Unsupported Variable Types
+
+The following Camunda 7 variable types are **not supported** and will cause the process instance migration to be skipped:
+
+| Camunda 7 Type | Example                                                                                                                              | Reason |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------|---------|
+| **Byte Array** | `"hello".getBytes()`                                                                                                                 | Unsupported in Camunda 8 |
+| **File** | `FileValue` objects                                                                                                                  | Unsupported in Camunda 8 |
+| **Java Serialized Objects** | Java objects serialized as `application/x-java-serialized-object` like `List`, `Set`, `Map`, `float`, `byte`, `char` or custom types | Unsupported in Camunda 8 |
+
+When a process instance contains unsupported variable types, the migrator will:
+- Skip the entire process instance
+- Log a detailed error message indicating the variable type that caused the skip
+- Mark the instance as skipped for potential retry after manual intervention
+
+### Variable Transformation Details
+
+#### Date Variables
+- **Input**: Java `Date` objects from Camunda 7
+- **Output**: ISO 8601 formatted strings (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`)
+- **Timezone**: Uses the JVM's default timezone setting
+- **Example**: `2024-07-25T14:30:45.123+0200`
+
+#### JSON Variables
+JSON variables are handled differently depending on their origin:
+
+**Spin JSON Variables** and **JSON Object Variables** (serialized with `application/json`):
+- Deserialized into Map structures for Camunda 8
+- Maintains nested object structure
+- Example: `{"name": "John", "age": 30}` becomes a Map object
+
+**Invalid JSON**:
+If JSON cannot be parsed, the process instance is skipped.
+
+#### XML Variables
+**Spin XML Variables** and **XML Object Variables** (serialized with `application/xml`):
+- Raw XML string content is preserved
+- No parsing or transformation applied
+
+#### Variable Name Compatibility
+The migrator handles variable names that are invalid in FEEL expressions:
+- Names starting with numbers (e.g., `1stVariable`)
+- Names with spaces (e.g., `my variable`)
+- Names with special characters (e.g., `var/name`, `var-name`)
+- Reserved keywords (e.g., `null`)
+
+These variables are migrated as-is, but may require special handling in FEEL expressions using bracket notation.
+
+### Custom Variable Transformation
+
 The `VariableInterceptor` interface allows you to define custom logic that executes whenever a variable is accessed or modified during migration. This is useful for auditing, transforming, or validating variable values.
 
-### How to Implement a VariableInterceptor
+#### How to Implement a VariableInterceptor
 
 1. Create a new Maven project with the provided `pom.xml` structure
 2. Add a dependency on `c7-data-migrator-core` (scope: provided)
@@ -375,34 +448,45 @@ The `VariableInterceptor` interface allows you to define custom logic that execu
 6. Configure in `application.yml`
 
 ```yaml
- Variable interceptor plugins configuration
- These plugins can be packaged in JARs and dropped in the userlib folder
+# Variable interceptor plugins configuration
+# These plugins can be packaged in JARs and dropped in the userlib folder
 migrator.interceptors:
   - class-name: com.example.MyCustomVariableInterceptor
   - class-name: com.example.AnotherVariableInterceptor
 ```
 
-Example of a custom variable interceptor can be find in the ./examples/variable-interceptor directory.
+Example of a custom variable interceptor can be found in the ./examples/variable-interceptor directory.
 
-### Execution Order
+#### Execution Order
 
 - If multiple interceptors are present, their execution order is determined by the `@Order` annotation (lower values run first).
-- When the interceptor in not a Spring bean, the default order is used and added to last in the list.
+- When the interceptor is not a Spring bean, the default order is used and added to last in the list.
 
 ---
 
-**Already Implemented Interceptors**
+**Built-in Variable Transformers**
 
-The following interceptors are already implemented in the project:
+The following transformers are automatically applied during migration:
 
-1. **DefaultVariableInterceptor**
-- Handles formatting and migration of primitive and object variables.
-- The interceptor is ordered with priority 0 to ensure it runs first.
+1. **BuiltInVariableTransformer** (Order: 0)
+   - Handles all basic variable type transformations
+   - Converts JSON objects to Map structures
+   - Handles Spin JSON/XML variables
+   - Rejects unsupported variable types
+   - Runs first to ensure proper type handling
 
-2. **DateVariableInterceptor**
-- Converts Camunda 7 Date variables to Camunda 8 compatible format `yyyy-MM-dd'T'HH:mm:ss.SSSZ`.
-- Uses by default the timezone of the JVM settings.
-- The interceptor is ordered with priority 10 to ensure it runs after the default interceptor.
+2. **BuiltInDateVariableTransformer** (Order: 10)
+   - Converts Camunda 7 Date variables to ISO 8601 format
+   - Uses JVM default timezone settings
+   - Runs after the main transformer to handle Date-specific formatting
+
+### Error Handling
+
+When variable transformation fails:
+- The entire process instance is skipped
+- Detailed error messages are logged with the specific variable name and error cause
+- The instance is marked for potential retry after fixing the underlying issue
+- You can use `--list-skipped` and `--retry-skipped` commands to manage failed migrations
 
 ## Migration Limitations
 

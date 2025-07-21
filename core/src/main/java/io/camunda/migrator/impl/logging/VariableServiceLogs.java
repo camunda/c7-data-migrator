@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Centralized logging and constants class for VariableService.
- * Contains all logging statements, error messages, and constants used in variable processing.
+ * Centralized logging and constants class for all variable-related operations.
+ * Contains all logging statements, error messages, and constants used in variable processing and transformation.
  */
 public class VariableServiceLogs {
 
@@ -22,19 +22,33 @@ public class VariableServiceLogs {
   // Constants
   public static final String LEGACY_ID_VARIABLE = "legacyId";
 
+  // Date format constants
+  public static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+  // Log message templates
+  public static final String START_EXECUTION_LOG = "Start {} execution for variable: {}";
+  public static final String END_EXECUTION_LOG = "End {} execution for variable: {}";
+  public static final String CONVERTING_DATE_LOG = "Converting date variable: {}";
+  public static final String CONVERTED_DATE_LOG = "Converted date {} to {}";
+
   // Error message templates
-  public static final String VARIABLE_INTERCEPTOR_FAILED_MSG = "Variable interceptor %s failed for variable %s";
+  public static final String VARIABLE_INTERCEPTOR_FAILED_MSG = "%s failed for variable with name '%s'";
+
+  // Error message constants (for exception throwing)
+  public static final String BYTE_ARRAY_UNSUPPORTED_ERROR = "Type 'byte[]' is unsupported in C8.";
+  public static final String FILE_TYPE_UNSUPPORTED_ERROR = "Type 'file' is unsupported in C8.";
+  public static final String JAVA_SERIALIZED_UNSUPPORTED_ERROR = "Objects serialized as 'application/x-java-serialized-object' are unsupported in C8.";
+  public static final String JSON_DESERIALIZATION_ERROR = "Error while deserializing JSON into Map type.";
+  public static final String GENERIC_TYPE_UNSUPPORTED_ERROR = "Type '%s' is unsupported in C8.";
 
   /**
    * Logs an error message for variable interceptor failure.
    *
    * @param interceptorName the name of the failed interceptor
    * @param variableName the name of the variable being processed
-   * @param exception the exception that occurred
    */
-  public static void logInterceptorError(String interceptorName, String variableName, Exception exception) {
-    String errorMsg = String.format(VARIABLE_INTERCEPTOR_FAILED_MSG, interceptorName, variableName);
-    LOGGER.error(errorMsg, exception);
+  public static void logInterceptorError(String interceptorName, String variableName) {
+    LOGGER.error(formatInterceptorError(interceptorName, variableName));
   }
 
   /**
@@ -46,6 +60,45 @@ public class VariableServiceLogs {
    */
   public static String formatInterceptorError(String interceptorName, String variableName) {
     return String.format(VARIABLE_INTERCEPTOR_FAILED_MSG, interceptorName, variableName);
+  }
+
+  /**
+   * Logs the start of variable transformation execution.
+   *
+   * @param transformerClass the transformer class
+   * @param variableName the variable name being processed
+   */
+  public static void logStartExecution(Class<?> transformerClass, String variableName) {
+    LOGGER.debug(START_EXECUTION_LOG, transformerClass, variableName);
+  }
+
+  /**
+   * Logs the end of variable transformation execution.
+   *
+   * @param transformerClass the transformer class
+   * @param variableName the variable name being processed
+   */
+  public static void logEndExecution(Class<?> transformerClass, String variableName) {
+    LOGGER.debug(END_EXECUTION_LOG, transformerClass, variableName);
+  }
+
+  /**
+   * Logs the start of date variable conversion.
+   *
+   * @param variableName the date variable name
+   */
+  public static void logConvertingDate(String variableName) {
+    LOGGER.debug(CONVERTING_DATE_LOG, variableName);
+  }
+
+  /**
+   * Logs the result of date conversion.
+   *
+   * @param originalValue the original date value
+   * @param formattedValue the formatted date string
+   */
+  public static void logConvertedDate(Object originalValue, String formattedValue) {
+    LOGGER.debug(CONVERTED_DATE_LOG, originalValue, formattedValue);
   }
 
 }

@@ -64,6 +64,7 @@ public class C7Client {
    */
   public List<VariableInstance> getAllVariables(String legacyProcessInstanceId) {
     VariableInstanceQuery variableQuery = runtimeService.createVariableInstanceQuery()
+        .disableCustomObjectDeserialization()
         .processInstanceIdIn(legacyProcessInstanceId);
 
     return new Pagination<VariableInstance>()
@@ -77,6 +78,7 @@ public class C7Client {
    */
   public List<VariableInstance> getLocalVariables(String activityInstanceId) {
     VariableInstanceQuery variableQuery = runtimeService.createVariableInstanceQuery()
+        .disableCustomObjectDeserialization()
         .activityInstanceIdIn(activityInstanceId);
 
     return new Pagination<VariableInstance>()
