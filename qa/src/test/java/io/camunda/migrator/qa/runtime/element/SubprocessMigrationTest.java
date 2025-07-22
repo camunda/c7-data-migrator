@@ -67,4 +67,35 @@ public class SubprocessMigrationTest extends RuntimeMigrationAbstractTest {
     assertThatProcessInstanceCountIsEqualTo(0);
   }
 
+  @Test
+  public void shouldNotSkipMigrationWhenPropagateAllParentVariablesIsFalseButMappingIsPresent() {
+    // given
+    deployer.deployProcessInC7AndC8("calledActivitySubprocess.bpmn");
+    deployer.deployProcessInC7AndC8("callActivityProcessNoPropagationWithMapping.bpmn");
+    ProcessInstance parentInstance = runtimeService.startProcessInstanceByKey("callingProcessIdNoPropagationWithMapping");
+    ProcessInstance subProcessInstance = runtimeService
+        .createProcessInstanceQuery()
+        .superProcessInstanceId(parentInstance.getProcessInstanceId())
+        .singleResult();
+
+    // when
+    runtimeMigrator.start();
+
+    // then
+    io.camunda.client.api.search.response.ProcessInstance c8ParentInstance =
+        camundaClient.newProcessInstanceSearchRequest().filter(processInstanceFilter -> {
+          processInstanceFilter.processDefinitionId("callingProcessIdNoPropagationWithMapping");
+        }).execute().items().getFirst();
+
+    Long c8ParentInstanceKey = c8ParentInstance.getProcessInstanceKey();
+    Optional<Variable> variable = getVariableByScope(c8ParentInstanceKey, c8ParentInstanceKey, LEGACY_ID_VAR_NAME);
+    assert variable.isPresent();
+    assert variable.get().getValue().equals("\""+parentInstance.getProcessInstanceId()+"\"");
+
+    assertThat(byProcessId("calledProcessInstanceId")).isActive()
+        .hasActiveElements(byId("userTaskId"))
+        .hasVariable(LEGACY_ID_VAR_NAME, subProcessInstance.getProcessInstanceId());
+    assertThat(byTaskName("userTaskName")).isCreated().hasElementId("userTaskId");
+  }
+
 }

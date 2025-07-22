@@ -383,9 +383,20 @@ public class RuntimeMigrator {
         for (var calledElement : calledElements) {
           String propagateAllParentVariables = calledElement.getDomElement().getAttribute("propagateAllParentVariables");
           if ("false".equalsIgnoreCase(propagateAllParentVariables)) {
-            throw new IllegalStateException(String.format("Found call activity with propagateAllParentVariables=false "
-                + "for flow node with id [%s] in C8 process. This is not supported by the migrator as it "
-                + "would lead to orphaned sub-process instances.", activityId));
+            // Check if there's an explicit mapping for legacyId
+            var ioMappings = extensionElements.getElementsQuery()
+                .filterByType(io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeIoMapping.class)
+                .list();
+
+            boolean hasLegacyIdMapping = ioMappings.stream()
+                .flatMap(mapping -> mapping.getInputs().stream())
+                .anyMatch(input -> "legacyId".equals(input.getTarget()));
+
+            if (!hasLegacyIdMapping) {
+              throw new IllegalStateException(String.format("Found call activity with propagateAllParentVariables=false "
+                  + "for flow node with id [%s] in C8 process. This is not supported by the migrator unless there is an "
+                  + "explicit mapping for the legacyId variable, as it would lead to orphaned sub-process instances.", activityId));
+            }
           }
         }
       }
