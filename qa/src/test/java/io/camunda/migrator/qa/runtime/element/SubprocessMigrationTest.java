@@ -51,4 +51,20 @@ public class SubprocessMigrationTest extends RuntimeMigrationAbstractTest {
         .hasVariable(LEGACY_ID_VAR_NAME, subProcessInstance.getProcessInstanceId());
     assertThat(byTaskName("userTaskName")).isCreated().hasElementId("userTaskId");
   }
+
+  @Test
+  public void shouldSkipMigrationWhenPropagateAllParentVariablesIsFalse() {
+    // given
+    deployer.deployProcessInC7AndC8("calledActivitySubprocess.bpmn");
+    deployer.deployProcessInC7AndC8("callActivityProcessNoPropagation.bpmn");
+    ProcessInstance parentInstance = runtimeService.startProcessInstanceByKey("callingProcessIdNoPropagation");
+
+    // when
+    runtimeMigrator.start();
+
+    // then
+    // verify no C8 instance was created
+    assertThatProcessInstanceCountIsEqualTo(0);
+  }
+
 }
