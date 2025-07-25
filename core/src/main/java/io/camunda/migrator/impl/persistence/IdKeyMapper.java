@@ -37,15 +37,9 @@ public interface IdKeyMapper {
 
   void insert(IdKeyDbModel idKeyDbModel);
 
-  List<IdKeyDbModel> findSkipped(@Param("offset") int offset, @Param("limit") int limit); // TODO: remove usages and use findSkippedByType
-
   List<IdKeyDbModel> findSkippedByType(@Param("type") TYPE type, @Param("offset") int offset, @Param("limit") int limit);
 
-  List<IdKeyDbModel> findSkipped();
-
-  long findSkippedCount(); // TODO: remove usages and use findSkippedCountByType
-
-  long findSkippedCountByType(@Param("type") TYPE type, @Param("offset") int offset, @Param("limit") int limit);
+  long countSkippedByType(@Param("type") TYPE type);
 
   List<String> findAllIds();
 

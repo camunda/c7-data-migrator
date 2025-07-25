@@ -68,7 +68,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     // then
     assertThatProcessInstanceCountIsEqualTo(0);
 
-    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = findSkippedRuntimeProcessInstances().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
     assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
 
@@ -91,7 +91,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
 
     // then the instance was not migrated and marked as skipped
     assertThatProcessInstanceCountIsEqualTo(0);
-    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = findSkippedRuntimeProcessInstances().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
     assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
 
@@ -106,7 +106,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     deployer.deployProcessInC7AndC8("multiInstanceProcess.bpmn");
     var process = runtimeService.startProcessInstanceByKey("multiInstanceProcess");
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkipped().size() == 1);
+    ensureTrue("Unexpected state: one process instance should be skipped", findSkippedRuntimeProcessInstances().size() == 1);
 
     // when running retrying runtime migration
     runtimeMigrator.setMode(RETRY_SKIPPED);
@@ -114,7 +114,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
 
     // then the instance was not migrated and still marked as skipped
     assertThatProcessInstanceCountIsEqualTo(0);
-    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = findSkippedRuntimeProcessInstances().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
     assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
 
@@ -173,7 +173,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     deployer.deployProcessInC7AndC8("multiInstanceProcess.bpmn");
     var process = runtimeService.startProcessInstanceByKey("multiInstanceProcess");
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: one process instance should be skipped", idKeyMapper.findSkipped().size() == 1);
+    ensureTrue("Unexpected state: one process instance should be skipped", findSkippedRuntimeProcessInstances().size() == 1);
 
     runtimeService.deleteProcessInstance(process.getId(), "State cannot be fixed!");
 
@@ -197,7 +197,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
       processInstancesIds.add(runtimeService.startProcessInstanceByKey("multiInstanceProcess").getProcessInstanceId());
     }
     runtimeMigrator.start();
-    ensureTrue("Unexpected state: 10 process instances should be skipped", idKeyMapper.findSkippedCount() == 10);
+    ensureTrue("Unexpected state: 10 process instances should be skipped", dbClient.countSkippedByType(IdKeyMapper.TYPE.RUNTIME_PROCESS_INSTANCE) == 10);
     // when running migration with list skipped mode
     runtimeMigrator.setMode(LIST_SKIPPED);
     runtimeMigrator.start();
@@ -212,7 +212,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     processInstancesIds.forEach(processInstanceId -> assertThat(capturedIds).contains(processInstanceId));
 
     // and skipped instances were not migrated
-    assertThat(idKeyMapper.findSkippedCount()).isEqualTo(10);
+    assertThat(idKeyMapper.countSkippedByType(IdKeyMapper.TYPE.RUNTIME_PROCESS_INSTANCE)).isEqualTo(10);
   }
 
   @Test

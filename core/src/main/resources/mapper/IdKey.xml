@@ -9,21 +9,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="io.camunda.migrator.impl.persistence.IdKeyMapper">
 
-<!--  TODO merge with new sqls-->
-  <select id="findSkippedCount" resultType="long">
-    SELECT COUNT(ID) FROM (
-      <include refid="findRuntimeSkippedByQueryCriteriaSql"/>
-    )
-  </select>
-
-  <select id="findSkipped" resultType="io.camunda.migrator.impl.persistence.IdKeyDbModel">
-    <include refid="findRuntimeSkippedByQueryCriteriaSql"/>
-  </select>
-
-  <select id="findSkippedCountByType" resultType="long">
-    SELECT COUNT(ID) FROM (
-    <include refid="findSkippedByQueryCriteriaSql"/>
-    )
+  <select id="countSkippedByType" resultType="long">
+    SELECT COUNT(ID) FROM ${prefix}MIGRATION_MAPPING
+    WHERE TYPE = #{type} AND INSTANCE_KEY IS NULL
   </select>
 
   <select id="findSkippedByType" resultType="io.camunda.migrator.impl.persistence.IdKeyDbModel">
@@ -33,12 +21,6 @@
   <sql id="findSkippedByQueryCriteriaSql">
     SELECT ID, INSTANCE_KEY, START_DATE, TYPE FROM ${prefix}MIGRATION_MAPPING
     WHERE TYPE = #{type} AND INSTANCE_KEY IS NULL
-    <include refid="io.camunda.migrator.Commons.pageSql"/>
-  </sql>
-
-  <sql id="findRuntimeSkippedByQueryCriteriaSql">
-    SELECT ID, INSTANCE_KEY, START_DATE, TYPE FROM ${prefix}MIGRATION_MAPPING
-    WHERE TYPE = 'RUNTIME_PROCESS_INSTANCE' AND INSTANCE_KEY IS NULL
     <include refid="io.camunda.migrator.Commons.pageSql"/>
   </sql>
 

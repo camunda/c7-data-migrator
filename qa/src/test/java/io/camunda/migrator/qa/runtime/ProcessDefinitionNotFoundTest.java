@@ -12,6 +12,7 @@ import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_C8_DEPLOY
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.camunda.migrator.RuntimeMigrator;
+import io.camunda.migrator.impl.clients.DbClient;
 import io.camunda.migrator.impl.persistence.IdKeyDbModel;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
@@ -28,6 +29,8 @@ class ProcessDefinitionNotFoundTest extends RuntimeMigrationAbstractTest {
 
   @Autowired
   private IdKeyMapper idKeyMapper;
+  @Autowired
+  private DbClient dbClient;
 
   @Test
   public void shouldSkipOnMissingC8Deployment() {
@@ -43,7 +46,7 @@ class ProcessDefinitionNotFoundTest extends RuntimeMigrationAbstractTest {
         String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("{}", "%s"), c7Instance.getId(),
             String.format(NO_C8_DEPLOYMENT_ERROR, "simpleProcess", c7Instance.getId())));
     assertThatProcessInstanceCountIsEqualTo(0);
-    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    List<IdKeyDbModel> skippedProcessInstanceIds = findSkippedRuntimeProcessInstances().stream().toList();
     assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
     assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(c7Instance.getId());
   }

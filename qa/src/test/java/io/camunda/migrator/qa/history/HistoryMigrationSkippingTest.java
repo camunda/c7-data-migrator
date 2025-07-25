@@ -43,13 +43,9 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
     assertThat(searchHistoricProcessInstances("userTaskProcessId").size()).isEqualTo(0);
 
     // and all elements for the definition were skipped skipped
-    assertThat(countSkipped(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE)).isEqualTo(5);
-    assertThat(countSkipped(IdKeyMapper.TYPE.HISTORY_FLOW_NODE)).isEqualTo(15);
-    assertThat(countSkipped(IdKeyMapper.TYPE.HISTORY_USER_TASK)).isEqualTo(5);
-  }
-
-  public long countSkipped(IdKeyMapper.TYPE type) {
-    return idKeyMapper.findSkippedCountByType(type, 0, Integer.MAX_VALUE);
+    assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE)).isEqualTo(5);
+    assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_FLOW_NODE)).isEqualTo(15);
+    assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_USER_TASK)).isEqualTo(5);
   }
 
 }

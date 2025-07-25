@@ -29,6 +29,7 @@ public class DbClientLogs {
   public static final String FAILED_TO_UPDATE_KEY = "Failed to update key for legacyId: ";
   public static final String FAILED_TO_INSERT_RECORD = "Failed to insert record for legacyId: ";
   public static final String FAILED_TO_FIND_SKIPPED_COUNT = "Failed to find skipped count";
+  public static final String FAILED_TO_FIND_SKIPPED_INSTANCES = "Failed to find skipped count";
 
   public static void updatingKeyForLegacyId(String legacyProcessInstanceId, Long processInstanceKey) {
     LOGGER.debug(UPDATING_KEY_FOR_LEGACY_ID, legacyProcessInstanceId, processInstanceKey);
