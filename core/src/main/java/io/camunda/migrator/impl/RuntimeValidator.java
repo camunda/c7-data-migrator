@@ -84,10 +84,15 @@ public class RuntimeValidator {
    */
   public void validateC7FlowNodes(String processDefinitionId, String activityId) {
     BpmnModelInstance c7BpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
+    String multiInstanceBodySuffix = "#multiInstanceBody";
+
     FlowElement element = c7BpmnModelInstance.getModelElementById(activityId);
-    if ((element instanceof Activity activity)
-        && (activity.getLoopCharacteristics() instanceof MultiInstanceLoopCharacteristics)) {
-      throw new IllegalStateException(String.format(MULTI_INSTANCE_LOOP_CHARACTERISTICS_ERROR, element.getId()));
+    boolean isMultiInstanceBody = activityId.endsWith(multiInstanceBodySuffix);
+    boolean hasMultiInstanceCharacteristics = element instanceof Activity activity
+        && activity.getLoopCharacteristics() instanceof MultiInstanceLoopCharacteristics;
+
+    if (isMultiInstanceBody || hasMultiInstanceCharacteristics) {
+      throw new IllegalStateException(String.format(MULTI_INSTANCE_LOOP_CHARACTERISTICS_ERROR, activityId));
     }
   }
 

@@ -77,6 +77,28 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
             String.format(MULTI_INSTANCE_LOOP_CHARACTERISTICS_ERROR, "multiUserTask")));
   }
 
+
+  @Test
+  public void shouldSkipProcessWithMultiInstanceServiceTask() {
+    // given process state in c7
+    deployer.deployProcessInC7AndC8("multiInstanceServiceTaskProcess.bpmn");
+    var process = runtimeService.startProcessInstanceByKey("multiInstanceServiceTaskProcess");
+
+    // when
+    runtimeMigrator.start();
+
+    // then
+    assertThatProcessInstanceCountIsEqualTo(0);
+
+    List<IdKeyDbModel> skippedProcessInstanceIds = idKeyMapper.findSkipped().stream().toList();
+    assertThat(skippedProcessInstanceIds.size()).isEqualTo(1);
+    assertThat(skippedProcessInstanceIds.getFirst().id()).isEqualTo(process.getId());
+
+    logs.assertContains(
+        String.format(SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR.replace("{}", "%s"), process.getId(),
+            String.format(MULTI_INSTANCE_LOOP_CHARACTERISTICS_ERROR, "ServiceTask_1#multiInstanceBody")));
+  }
+
   @Test
   public void shouldSkipMultiLevelMultiInstanceProcessMigration() {
     // given process state in c7
