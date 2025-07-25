@@ -5,9 +5,12 @@
  * Licensed under the Camunda License 1.0. You may not use this file
  * except in compliance with the Camunda License 1.0.
  */
-package io.camunda.migrator.qa.util;
+package io.camunda.migrator.constants;
 
-public class MigrationTestConstants {
+public final class MigratorConstants {
+
+  private MigratorConstants() {}
+
   public static final String LEGACY_ID_VAR_NAME = "legacyId";
   public static final String USER_TASK_ID = "userTaskId";
 }

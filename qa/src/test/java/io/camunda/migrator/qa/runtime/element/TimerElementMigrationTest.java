@@ -7,7 +7,7 @@
  */
 package io.camunda.migrator.qa.runtime.element;
 
-import static io.camunda.migrator.qa.util.MigrationTestConstants.LEGACY_ID_VAR_NAME;
+import static io.camunda.migrator.constants.MigratorConstants.LEGACY_ID_VAR_NAME;
 import static io.camunda.process.test.api.CamundaAssert.assertThat;
 import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.byProcessId;
 

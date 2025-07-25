@@ -11,7 +11,8 @@
     <bpmn:sequenceFlow id="Flow_10u5e0b" sourceRef="StartEvent" targetRef="call"/>
     <bpmn:callActivity calledElement="multiInstanceProcess" completionQuantity="1" id="call" isForCompensation="false" name="Call" startQuantity="1">
       <bpmn:extensionElements>
-        <zeebe:calledElement processId="multiInstanceProcess" propagateAllChildVariables="false" propagateAllParentVariables="false"/>
+        <zeebe:calledElement processId="multiInstanceProcess" propagateAllChildVariables="true"
+        propagateAllParentVariables="true"/>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_10u5e0b</bpmn:incoming>
       <bpmn:outgoing>Flow_1r2nyfk</bpmn:outgoing>

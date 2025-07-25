@@ -7,6 +7,7 @@
  */
 package io.camunda.migrator.impl;
 
+import static io.camunda.migrator.constants.MigratorConstants.LEGACY_ID_VAR_NAME;
 import static io.camunda.migrator.impl.util.C7Utils.getActiveActivityIdsById;
 import static io.camunda.migrator.impl.util.ExceptionUtils.callApi;
 import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.FAILED_TO_PARSE_BPMN_MODEL;
@@ -15,6 +16,7 @@ import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.MULTI_INSTAN
 import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_C8_DEPLOYMENT_ERROR;
 import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_NONE_START_EVENT_ERROR;
 import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.NO_EXECUTION_LISTENER_OF_TYPE_ERROR;
+import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.CALL_ACTIVITY_LEGACY_ID_ERROR;
 
 import io.camunda.migrator.impl.logging.RuntimeValidatorLogs;
 import static io.camunda.zeebe.model.bpmn.Bpmn.readModelFromStream;
@@ -134,8 +136,37 @@ public class RuntimeValidator {
    */
   public void validateC8FlowNodes(String xmlString, String activityId) {
     var bpmnModelInstance = parseBpmnModel(xmlString);
-    if (bpmnModelInstance.getModelElementById(activityId) == null) {
+    var element = bpmnModelInstance.getModelElementById(activityId);
+    if (element == null) {
       throw new IllegalStateException(String.format(FLOW_NODE_NOT_EXISTS_ERROR, activityId));
+    }
+
+    // Check if it's a CallActivity and validate propagateAllParentVariables
+    if (element instanceof io.camunda.zeebe.model.bpmn.instance.CallActivity callActivity) {
+      var extensionElements = callActivity.getExtensionElements();
+      if (extensionElements != null) {
+        var calledElements = extensionElements.getElementsQuery()
+            .filterByType(io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeCalledElement.class)
+            .list();
+
+        for (var calledElement : calledElements) {
+          String propagateAllParentVariables = calledElement.getDomElement().getAttribute("propagateAllParentVariables");
+          if ("false".equalsIgnoreCase(propagateAllParentVariables)) {
+            // Check if there's an explicit mapping for legacyId
+            var ioMappings = extensionElements.getElementsQuery()
+                .filterByType(io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeIoMapping.class)
+                .list();
+
+            boolean hasLegacyIdMapping = ioMappings.stream()
+                .flatMap(mapping -> mapping.getInputs().stream())
+                .anyMatch(input -> LEGACY_ID_VAR_NAME.equals(input.getTarget()));
+
+            if (!hasLegacyIdMapping) {
+              throw new IllegalStateException(String.format(CALL_ACTIVITY_LEGACY_ID_ERROR, activityId));
+            }
+          }
+        }
+      }
     }
   }
 

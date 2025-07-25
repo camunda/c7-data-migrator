@@ -47,7 +47,16 @@ public abstract class RuntimeMigrationAbstractTest extends AbstractMigratorTest 
 
     // C8
     List<ProcessInstance> items = camundaClient.newProcessInstanceSearchRequest().execute().items();
-    items.forEach(i -> camundaClient.newDeleteResourceCommand(i.getProcessInstanceKey()));
+    for (ProcessInstance i : items) {
+      try {
+        camundaClient.newDeleteResourceCommand(i.getProcessInstanceKey()).execute();
+      } catch (io.camunda.client.api.command.ClientStatusException e) {
+        if (!e.getMessage().contains("NOT_FOUND")) {
+          throw e;
+        }
+        // Ignore NOT_FOUND errors as the instance might have been deleted already
+      }
+    }
 
     // Migrator table
     idKeyMapper.findAllIds().forEach(id -> idKeyMapper.delete(id));
