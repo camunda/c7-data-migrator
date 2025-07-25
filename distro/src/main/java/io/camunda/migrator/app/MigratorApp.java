@@ -15,6 +15,7 @@ import io.camunda.migrator.impl.AutoDeployer;
 import io.camunda.migrator.HistoryMigrator;
 import io.camunda.migrator.MigratorMode;
 import io.camunda.migrator.RuntimeMigrator;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -26,35 +27,82 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class MigratorApp {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MigratorApp.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(MigratorApp.class);
 
   protected static final String RUN_HISTORY_MIGRATION = "history";
   protected static final String RUN_RUNTIME_MIGRATION = "runtime";
   protected static final String RUN_RETRY_SKIPPED = "retry-skipped";
   protected static final String RUN_LIST_SKIPPED = "list-skipped";
 
+  protected static final Set<String> VALID_FLAGS = Set.of(
+      "--" + RUN_RUNTIME_MIGRATION,
+      "--" + RUN_HISTORY_MIGRATION,
+      "--" + RUN_LIST_SKIPPED,
+      "--" + RUN_RETRY_SKIPPED
+  );
+
+  protected static final int MAX_ARGUMENTS = 3;
+
   public static void main(String[] args) {
-    ConfigurableApplicationContext context = SpringApplication.run(MigratorApp.class, args);
-    ApplicationArguments appArgs = new DefaultApplicationArguments(args);
-    MigratorMode mode = getMigratorMode(appArgs);
     try {
-      AutoDeployer autoDeployer = context.getBean(AutoDeployer.class);
-      autoDeployer.deploy();
-      if (shouldRunFullMigration(appArgs)) {
-        LOGGER.info("Migrating both runtime and history");
-        migrateRuntime(context, mode);
-        migrateHistory(context, mode);
-      }
-      else if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
-        migrateRuntime(context, mode);
-      } else if (appArgs.containsOption(RUN_HISTORY_MIGRATION)) {
-        migrateHistory(context, mode);
+      // Early validation before Spring Boot starts
+      validateArguments(args);
+
+      if (args.length == 0) {
+        LOGGER.info("Starting application without migration flags");
       } else {
-        LOGGER.warn("Invalid argument combination");
+        LOGGER.info("Starting migration with flags: {}", String.join(" ", args));
       }
-    } finally {
-      SpringApplication.exit(context);
+
+      // Continue with Spring Boot application
+      ConfigurableApplicationContext context = SpringApplication.run(MigratorApp.class, args);
+      ApplicationArguments appArgs = new DefaultApplicationArguments(args);
+      MigratorMode mode = getMigratorMode(appArgs);
+      try {
+        AutoDeployer autoDeployer = context.getBean(AutoDeployer.class);
+        autoDeployer.deploy();
+        if (shouldRunFullMigration(appArgs)) {
+          LOGGER.info("Migrating both runtime and history");
+          migrateRuntime(context, mode);
+          migrateHistory(context, mode);
+        }
+        else if (appArgs.containsOption(RUN_RUNTIME_MIGRATION)) {
+          migrateRuntime(context, mode);
+        } else if (appArgs.containsOption(RUN_HISTORY_MIGRATION)) {
+          migrateHistory(context, mode);
+        } else {
+          LOGGER.warn("Invalid argument combination");
+        }
+      } finally {
+        SpringApplication.exit(context);
+      }
+    } catch (IllegalArgumentException e) {
+      LOGGER.error("Error: {}", e.getMessage());
+      printUsage();
+      System.exit(1);
     }
+  }
+
+  protected static void validateArguments(String[] args) {
+    if (args.length > MAX_ARGUMENTS) {
+      throw new IllegalArgumentException("Too many arguments.");
+    }
+
+    for (String arg : args) {
+      if (!VALID_FLAGS.contains(arg)) {
+        throw new IllegalArgumentException("Invalid flag: " + arg);
+      }
+    }
+  }
+
+  protected static void printUsage() {
+    System.out.println();
+    System.out.println("Usage: start.sh [--runtime] [--history] [--list-skipped|--retry-skipped]");
+    System.out.println("Options:");
+    System.out.println("  --runtime         - Migrate runtime data only");
+    System.out.println("  --history         - Migrate history data only");
+    System.out.println("  --list-skipped    - List previously skipped data");
+    System.out.println("  --retry-skipped   - Retry only previously skipped data");
   }
 
   public static void migrateRuntime(ConfigurableApplicationContext context, MigratorMode mode) {

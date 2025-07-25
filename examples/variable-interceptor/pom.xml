@@ -12,7 +12,7 @@
     <artifactId>my-variable-interceptor</artifactId>
     <packaging>jar</packaging>
 
-    <name>My Variable Interceptor</name>
+    <name>C7 Data Migrator - Examples - Variable Interceptor</name>
     <description>Example variable interceptor for C7 Data Migrator</description>
 
     <properties>

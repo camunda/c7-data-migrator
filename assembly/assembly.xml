@@ -53,6 +53,10 @@
       <outputDirectory>configuration/</outputDirectory>
     </file>
     <file>
+      <source>resources/launcher.properties</source>
+      <outputDirectory>internal</outputDirectory>
+    </file>
+    <file>
       <source>resources/start.sh</source>
       <filtered>true</filtered>
       <outputDirectory/>

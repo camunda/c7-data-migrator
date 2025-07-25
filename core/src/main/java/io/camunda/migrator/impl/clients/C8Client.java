@@ -7,15 +7,16 @@
  */
 package io.camunda.migrator.impl.clients;
 
-import static io.camunda.migrator.impl.util.ExceptionUtils.callApi;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.CREATING_PROCESS_INSTANCE_FAILED;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.FAILED_TO_ACTIVATE_JOBS;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.FAILED_TO_FETCH_PROCESS_DEFINITION_XML;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.FAILED_TO_FETCH_VARIABLE;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.FAILED_TO_MODIFY_PROCESS_INSTANCE;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.PROCESS_DEFINITION_SEARCH_FAILED;
+import static io.camunda.migrator.impl.util.ExceptionUtils.callApi;
 
 import io.camunda.client.CamundaClient;
+import io.camunda.client.api.command.DeployResourceCommandStep1.DeployResourceCommandStep2;
 import io.camunda.client.api.command.ModifyProcessInstanceCommandStep1.ModifyProcessInstanceCommandStep3;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.response.ProcessInstanceEvent;
@@ -23,8 +24,10 @@ import io.camunda.client.api.search.response.ProcessDefinition;
 import io.camunda.client.api.search.response.SearchResponse;
 import io.camunda.migrator.config.property.MigratorProperties;
 import io.camunda.migrator.impl.model.FlowNodeActivation;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -107,6 +110,18 @@ public class C8Client {
     });
 
     callApi(() -> ((ModifyProcessInstanceCommandStep3) modifyProcessInstance).execute(), FAILED_TO_MODIFY_PROCESS_INSTANCE + processInstanceKey);
+  }
+
+  public void deployResources(Set<Path> models) {
+    DeployResourceCommandStep2 deployResourceCmd = null;
+    var deployResource = camundaClient.newDeployResourceCommand();
+    for (Path model : models) {
+      deployResourceCmd = deployResource.addResourceFile(model.toString());
+    }
+
+    if (deployResourceCmd != null) {
+      callApi(deployResourceCmd::execute, "Failed to deploy resources: " + models);
+    }
   }
 
 }
