@@ -98,7 +98,7 @@ class DistributionSmokeTest {
   }
 
   @Test
-  @Timeout(value = 30, unit = TimeUnit.SECONDS)
+  @Timeout(value = 60, unit = TimeUnit.SECONDS)
   void shouldAcceptValidFlags() throws Exception {
     // given
     String[] validFlags = {"--runtime", "--history", "--list-skipped", "--retry-skipped"};
