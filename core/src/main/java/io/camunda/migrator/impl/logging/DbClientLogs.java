@@ -24,6 +24,7 @@ public class DbClientLogs {
 
   // DbClient Error Messages
   public static final String FAILED_TO_CHECK_EXISTENCE = "Failed to check existence for legacyId: ";
+  public static final String FAILED_TO_CHECK_KEY = "Failed to check key for legacyId: ";
   public static final String FAILED_TO_FIND_LATEST_START_DATE = "Failed to find latest start date for type: ";
   public static final String FAILED_TO_UPDATE_KEY = "Failed to update key for legacyId: ";
   public static final String FAILED_TO_INSERT_RECORD = "Failed to insert record for legacyId: ";

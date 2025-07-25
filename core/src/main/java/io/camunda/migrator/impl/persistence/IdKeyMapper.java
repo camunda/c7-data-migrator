@@ -29,22 +29,27 @@ public interface IdKeyMapper {
 
   boolean checkExists(String id);
 
+  boolean checkHasKey(String id);
+
   Date findLatestStartDateByType(TYPE type);
 
   Long findKeyById(String id);
 
   void insert(IdKeyDbModel idKeyDbModel);
 
-  List<IdKeyDbModel> findSkipped(@Param("offset") int offset, @Param("limit") int limit);
+  List<IdKeyDbModel> findSkipped(@Param("offset") int offset, @Param("limit") int limit); // TODO: remove usages and use findSkippedByType
+
+  List<IdKeyDbModel> findSkippedByType(@Param("type") TYPE type, @Param("offset") int offset, @Param("limit") int limit);
 
   List<IdKeyDbModel> findSkipped();
 
-  long findSkippedCount();
+  long findSkippedCount(); // TODO: remove usages and use findSkippedCountByType
+
+  long findSkippedCountByType(@Param("type") TYPE type, @Param("offset") int offset, @Param("limit") int limit);
 
   List<String> findAllIds();
 
   void updateKeyById(IdKeyDbModel idKeyDbModel);
 
   void delete(String id);
-
 }

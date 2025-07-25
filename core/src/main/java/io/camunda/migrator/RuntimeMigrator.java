@@ -77,7 +77,7 @@ public class RuntimeMigrator {
         startProcessInstance(legacyProcessInstanceId, startDate);
 
       } else if (isUnknown(legacyProcessInstanceId)) {
-        dbClient.insert(legacyProcessInstanceId, startDate, null);
+        dbClient.insert(legacyProcessInstanceId, startDate, null, TYPE.RUNTIME_PROCESS_INSTANCE);
       }
     });
 
@@ -116,15 +116,15 @@ public class RuntimeMigrator {
     RuntimeMigratorLogs.stacktrace(e);
 
     if (MIGRATE.equals(mode)) {
-      dbClient.insert(legacyProcessInstanceId, startDate, null);
+      dbClient.insert(legacyProcessInstanceId, startDate, null, TYPE.RUNTIME_PROCESS_INSTANCE);
     }
   }
 
   protected void saveRecord(String legacyProcessInstanceId, Date startDate, Long processInstanceKey) {
     if (RETRY_SKIPPED.equals(mode)) {
-      dbClient.updateKeyById(legacyProcessInstanceId, processInstanceKey);
+      dbClient.updateKeyById(legacyProcessInstanceId, processInstanceKey, TYPE.RUNTIME_PROCESS_INSTANCE);
     } else if (MIGRATE.equals(mode)) {
-      dbClient.insert(legacyProcessInstanceId, startDate, processInstanceKey);
+      dbClient.insert(legacyProcessInstanceId, startDate, processInstanceKey, TYPE.RUNTIME_PROCESS_INSTANCE);
     }
   }
 
@@ -143,7 +143,7 @@ public class RuntimeMigrator {
     RuntimeMigratorLogs.fetchingProcessInstances();
 
     if (RETRY_SKIPPED.equals(mode)) {
-      dbClient.fetch(storeMappingConsumer);
+      dbClient.fetchSkipped(TYPE.RUNTIME_PROCESS_INSTANCE, storeMappingConsumer);
     } else {
       RuntimeMigratorLogs.fetchingLatestStartDate();
       Date latestStartDate = dbClient.findLatestStartDateByType(TYPE.RUNTIME_PROCESS_INSTANCE);

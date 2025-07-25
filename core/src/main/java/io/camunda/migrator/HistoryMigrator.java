@@ -7,6 +7,11 @@
  */
 package io.camunda.migrator;
 
+
+import static io.camunda.migrator.MigratorMode.LIST_SKIPPED;
+import static io.camunda.migrator.MigratorMode.MIGRATE;
+import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
+
 import io.camunda.db.rdbms.read.domain.FlowNodeInstanceDbQuery;
 import io.camunda.db.rdbms.read.domain.ProcessDefinitionDbQuery;
 import io.camunda.db.rdbms.sql.DecisionDefinitionMapper;
@@ -33,12 +38,14 @@ import io.camunda.migrator.converter.ProcessInstanceConverter;
 import io.camunda.migrator.converter.UserTaskConverter;
 import io.camunda.migrator.converter.VariableConverter;
 import io.camunda.migrator.impl.Pagination;
+import io.camunda.migrator.impl.clients.DbClient;
 import io.camunda.migrator.impl.persistence.IdKeyDbModel;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.search.entities.FlowNodeInstanceEntity;
 import io.camunda.search.entities.ProcessDefinitionEntity;
 import io.camunda.search.entities.ProcessInstanceEntity;
 import io.camunda.search.filter.FlowNodeInstanceFilter;
+import java.util.Date;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
@@ -106,6 +113,9 @@ public class HistoryMigrator {
   @Autowired
   protected MigratorProperties migratorProperties;
 
+  @Autowired
+  protected DbClient dbClient;
+
   // Converters
 
   @Autowired
@@ -129,6 +139,16 @@ public class HistoryMigrator {
   @Autowired
   private DecisionDefinitionConverter decisionDefinitionConverter;
 
+  protected MigratorMode mode = MIGRATE;
+
+  public void start() {
+    if (LIST_SKIPPED.equals(mode)) {
+      // TODO: list entities
+    } else {
+      migrate();
+    }
+  }
+
   public void migrate() {
     LOGGER.info("Migrating C7 data...");
     // Start process instance
@@ -138,8 +158,7 @@ public class HistoryMigrator {
     migrateUserTasks();
     migrateVariables();
     migrateIncidents();
-
-    //migrateDecisionDefinitions();
+    //      migrateDecisionDefinitions();
   }
 
   private void migrateDecisionDefinitions() {
@@ -162,238 +181,239 @@ public class HistoryMigrator {
           LOGGER.debug("Migrating legacy decision definition with id: [{}]", legacyId);
           DecisionDefinitionDbModel dbModel = decisionDefinitionConverter.apply(legacyDecisionDefinition);
           decisionDefinitionMapper.insert(dbModel);
-          insertKeyIdMapping(legacyId, dbModel.decisionDefinitionKey(), IdKeyMapper.TYPE.HISTORY_DECISION_INSTANCE);
+          saveRecord(legacyId, dbModel.decisionDefinitionKey(), IdKeyMapper.TYPE.HISTORY_DECISION_INSTANCE);
           LOGGER.debug("Migration of legacy decision definition with id [{}] completed", legacyId);
         });
   }
 
-  private void migrateProcessDefinitions() {
+  public void migrateProcessDefinitions() {
     LOGGER.info("Migrating process definitions");
-
-    ProcessDefinitionQueryImpl legacyProcessDefinitionQuery = (ProcessDefinitionQueryImpl) repositoryService.createProcessDefinitionQuery()
-        .orderByProcessDefinitionId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
-    if (latestLegacyId != null) {
-      legacyProcessDefinitionQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+     // TODO: handle retry
+    } else {
+      var legacyProcessDefinitionQuery = (ProcessDefinitionQueryImpl) repositoryService.createProcessDefinitionQuery().orderByProcessDefinitionId().asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
+      if (latestLegacyId != null) {
+        legacyProcessDefinitionQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<ProcessDefinition>()
+          .pageSize(getPageSize())
+          .query(legacyProcessDefinitionQuery)
+          .callback(this::migrateHistoricProcessDefinition);
     }
-
-    new Pagination<ProcessDefinition>()
-        .pageSize(getPageSize())
-        .query(legacyProcessDefinitionQuery)
-        .callback(legacyProcessDefinition -> {
-          String legacyId = legacyProcessDefinition.getId();
-          LOGGER.debug("Migrating legacy process definition with id: [{}]", legacyId);
-          ProcessDefinitionDbModel dbModel = processDefinitionConverter.apply(legacyProcessDefinition);
-          processDefinitionMapper.insert(dbModel);
-          insertKeyIdMapping(legacyId, dbModel.processDefinitionKey(), IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
-          LOGGER.debug("Migration of legacy process definition with id [{}] completed", legacyId);
-        });
   }
 
-  private void migrateProcessInstances() {
+  private void migrateHistoricProcessDefinition(ProcessDefinition legacyProcessDefinition) {
+    String legacyId = legacyProcessDefinition.getId();
+    LOGGER.debug("Migrating legacy process definition with id: [{}]", legacyId);
+    ProcessDefinitionDbModel dbModel = processDefinitionConverter.apply(legacyProcessDefinition);
+    processDefinitionMapper.insert(dbModel);
+    saveRecord(legacyId, dbModel.processDefinitionKey(), IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
+    LOGGER.debug("Migration of legacy process definition with id [{}] completed", legacyId);
+  }
+
+  public void migrateProcessInstances() {
     LOGGER.info("Migrating process instances");
 
-    HistoricProcessInstanceQueryImpl legacyProcessInstanceQuery = (HistoricProcessInstanceQueryImpl) historyService.createHistoricProcessInstanceQuery()
-        .orderByProcessInstanceId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
-    if (latestLegacyId != null) {
-      legacyProcessInstanceQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+      // TODO: handle retry
+    } else {
+      var legacyProcessInstanceQuery = (HistoricProcessInstanceQueryImpl) historyService.createHistoricProcessInstanceQuery().orderByProcessInstanceId().asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
+      if (latestLegacyId != null) {
+        legacyProcessInstanceQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<HistoricProcessInstance>()
+          .pageSize(getPageSize())
+          .query(legacyProcessInstanceQuery)
+          .callback(this::migrateHistoricProcessInstance);
     }
-
-    new Pagination<HistoricProcessInstance>()
-        .pageSize(getPageSize())
-        .query(legacyProcessInstanceQuery)
-        .callback(legacyProcessInstance -> {
-          String legacyProcessInstanceId = legacyProcessInstance.getId();
-          LOGGER.debug("Migrating legacy process instance with id: [{}]", legacyProcessInstanceId);
-          Long processDefinitionKey = findProcessDefinitionKey(legacyProcessInstance.getProcessDefinitionId());
-          if (processDefinitionKey != null) {
-            String legacySuperProcessInstanceId = legacyProcessInstance.getSuperProcessInstanceId();
-            Long parentProcessInstanceKey = null;
-            if (legacySuperProcessInstanceId != null) {
-              ProcessInstanceEntity parentInstance = findProcessInstanceByLegacyId(legacySuperProcessInstanceId);
-              if (parentInstance != null) {
-                parentProcessInstanceKey = parentInstance.processInstanceKey();
-              }
-            }
-
-            if (parentProcessInstanceKey != null || legacySuperProcessInstanceId == null) {
-              // Continue if PI has no parent
-              ProcessInstanceDbModel dbModel = processInstanceConverter.apply(legacyProcessInstance, processDefinitionKey, parentProcessInstanceKey);
-              processInstanceMapper.insert(dbModel);
-              insertKeyIdMapping(legacyProcessInstanceId, dbModel.processInstanceKey(), IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
-              LOGGER.debug("Migration of legacy process instances with id [{}] completed", legacyProcessInstanceId);
-            } else {
-              LOGGER.debug(
-                  "Migration of legacy process instance with id [{}] skipped. Parent process instance not yet available.", legacyProcessInstanceId);
-            }
-          } else {
-            LOGGER.debug(
-                "Migration of legacy process instance with id [{}] skipped. Process definition not yet available.",
-                legacyProcessInstanceId);
-          }
-        });
   }
 
-  private void migrateIncidents() {
+  private void migrateHistoricProcessInstance(HistoricProcessInstance legacyProcessInstance) {
+    String legacyProcessInstanceId = legacyProcessInstance.getId();
+    String processDefinitionId = legacyProcessInstance.getProcessDefinitionId();
+    LOGGER.debug("Migrating process instance with legacy id: [{}]", legacyProcessInstanceId);
+    if(isMigrated(processDefinitionId)) {
+      Long processDefinitionKey = findProcessDefinitionKey(processDefinitionId);
+      String legacySuperProcessInstanceId = legacyProcessInstance.getSuperProcessInstanceId();
+      Long parentProcessInstanceKey = null;
+      if (legacySuperProcessInstanceId != null) {
+        ProcessInstanceEntity parentInstance = findProcessInstanceByLegacyId(legacySuperProcessInstanceId);
+        if (parentInstance != null) {
+          parentProcessInstanceKey = parentInstance.processInstanceKey();
+        }
+      }
+
+      if (parentProcessInstanceKey != null || legacySuperProcessInstanceId == null) {
+        // Continue if PI has no parent
+        ProcessInstanceDbModel dbModel = processInstanceConverter.apply(legacyProcessInstance, processDefinitionKey, parentProcessInstanceKey);
+        processInstanceMapper.insert(dbModel);
+        saveRecord(legacyProcessInstanceId, dbModel.processInstanceKey(), IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
+        LOGGER.debug("Migration of legacy process instances with id [{}] completed", legacyProcessInstanceId);
+      } else {
+        saveRecord(legacyProcessInstanceId, null, IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
+        LOGGER.debug("Migration of legacy process instance with id [{}] skipped. Parent process instance not yet available.", legacyProcessInstanceId);
+      }
+    } else {
+      saveRecord(legacyProcessInstanceId, null, IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE);
+      LOGGER.debug("Migration of legacy process instance with id [{}] skipped. Process definition not yet available.", legacyProcessInstanceId);
+    }
+  }
+
+  public void migrateIncidents() {
     LOGGER.info("Migrating incidents");
 
-    HistoricIncidentQueryImpl legacyIncidentQuery = (HistoricIncidentQueryImpl) historyService.createHistoricIncidentQuery()
-        .orderByIncidentId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_INCIDENT);
-    if (latestLegacyId != null) {
-      legacyIncidentQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+      // TODO: handle retry
+    } else {
+      var legacyIncidentQuery = (HistoricIncidentQueryImpl) historyService.createHistoricIncidentQuery().orderByIncidentId().asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_INCIDENT);
+      if (latestLegacyId != null) {
+        legacyIncidentQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<HistoricIncident>()
+          .pageSize(getPageSize())
+          .query(legacyIncidentQuery)
+          .callback(this::migrateHistoricIncident);
     }
-
-    new Pagination<HistoricIncident>()
-        .pageSize(getPageSize())
-        .query(legacyIncidentQuery)
-        .callback(legacyIncident -> {
-          String legacyIncidentId = legacyIncident.getId();
-          LOGGER.debug("Migrating legacy incident with id: [{}]", legacyIncidentId);
-          ProcessInstanceEntity legacyProcessInstance = findProcessInstanceByLegacyId(legacyIncident.getProcessInstanceId());
-          if (legacyProcessInstance != null) {
-            Long processInstanceKey = legacyProcessInstance.processInstanceKey();
-            if (processInstanceKey != null) {
-              Long flowNodeInstanceKey = findFlowNodeKey(legacyIncident.getActivityId(), legacyIncident.getProcessInstanceId());
-              Long processDefinitionKey = findProcessDefinitionKey(legacyIncident.getProcessDefinitionId());
-              Long jobDefinitionKey = null; // TODO Job table doesn't exist yet.
-              IncidentDbModel dbModel = incidentConverter.apply(legacyIncident, processDefinitionKey, processInstanceKey, jobDefinitionKey, flowNodeInstanceKey);
-              incidentMapper.insert(dbModel);
-              insertKeyIdMapping(legacyIncidentId, dbModel.incidentKey(), IdKeyMapper.TYPE.HISTORY_INCIDENT);
-              LOGGER.debug("Migration of legacy incident with id [{}] completed.", legacyIncidentId);
-            } else {
-              LOGGER.debug("Migration of legacy incident with id [{}] skipped. Process instance not yet available.",
-                  legacyIncidentId);
-            }
-          }
-        });
   }
 
-  private void migrateVariables() {
+  private void migrateHistoricIncident(HistoricIncident legacyIncident) {
+    String legacyIncidentId = legacyIncident.getId();
+    LOGGER.debug("Migrating legacy incident with id: [{}]", legacyIncidentId);
+    if (isMigrated(legacyIncident.getProcessInstanceId())) {
+      ProcessInstanceEntity legacyProcessInstance = findProcessInstanceByLegacyId(legacyIncident.getProcessInstanceId());
+      Long processInstanceKey = legacyProcessInstance.processInstanceKey();
+      Long flowNodeInstanceKey = findFlowNodeKey(legacyIncident.getActivityId(), legacyIncident.getProcessInstanceId());
+      Long processDefinitionKey = findProcessDefinitionKey(legacyIncident.getProcessDefinitionId());
+      Long jobDefinitionKey = null; // TODO Job table doesn't exist yet.
+      IncidentDbModel dbModel = incidentConverter.apply(legacyIncident, processDefinitionKey, processInstanceKey, jobDefinitionKey, flowNodeInstanceKey);
+      incidentMapper.insert(dbModel);
+      saveRecord(legacyIncidentId, dbModel.incidentKey(), IdKeyMapper.TYPE.HISTORY_INCIDENT);
+      LOGGER.debug("Migration of legacy incident with id [{}] completed.", legacyIncidentId);
+    } else {
+      saveRecord(legacyIncidentId, null, IdKeyMapper.TYPE.HISTORY_INCIDENT);
+      LOGGER.debug("Migration of legacy incident with id [{}] skipped. Process instance not yet available.", legacyIncidentId);
+    }
+  }
+
+  public void migrateVariables() {
     LOGGER.info("Migrating variables");
 
-    HistoricVariableInstanceQueryImpl legacyVariableQuery = (HistoricVariableInstanceQueryImpl) historyService.createHistoricVariableInstanceQuery()
-        .orderByVariableId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_VARIABLE);
-    if (latestLegacyId != null) {
-      legacyVariableQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+      // TODO: handle retry
+    } else {
+      var legacyVariableQuery = (HistoricVariableInstanceQueryImpl) historyService.createHistoricVariableInstanceQuery().orderByVariableId()          .asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_VARIABLE);
+      if (latestLegacyId != null) {
+        legacyVariableQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<HistoricVariableInstance>()
+          .pageSize(getPageSize())
+          .query(legacyVariableQuery)
+          .callback(this::migrateHistoricVariable);
     }
 
-    new Pagination<HistoricVariableInstance>()
-        .pageSize(getPageSize())
-        .query(legacyVariableQuery)
-        .callback(legacyVariable -> {
-          String legacyVariableId = legacyVariable.getId();
-          LOGGER.debug("Migrating legacy variable with id: [{}]", legacyVariableId);
-          String legacyProcessInstanceId = legacyVariable.getProcessInstanceId();
-          ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyProcessInstanceId);
-
-          if (processInstance != null) {
-            Long processInstanceKey = processInstance.processInstanceKey();
-            Long scopeKey = findFlowNodeKey(legacyVariable.getActivityInstanceId()); // TODO does this cover scope correctly?
-            if (scopeKey != null) {
-              VariableDbModel dbModel = variableConverter.apply(legacyVariable, processInstanceKey, scopeKey);
-              variableMapper.insert(dbModel);
-              insertKeyIdMapping(legacyVariableId, dbModel.variableKey(), IdKeyMapper.TYPE.HISTORY_VARIABLE);
-              LOGGER.debug("Migration of legacy variable with id [{}] completed.", legacyVariableId);
-            } else {
-              LOGGER.debug("Migration of legacy variable with id [{}] skipped. Activity instance not yet available.",
-                  legacyVariableId);
-            }
-          } else {
-            LOGGER.debug("Migration of legacy variable with id [{}] skipped. Process instance not yet available.",
-                legacyVariableId);
-          }
-        });
   }
 
-  private void migrateUserTasks() {
+  private void migrateHistoricVariable(HistoricVariableInstance legacyVariable) {
+    String legacyVariableId = legacyVariable.getId();
+    LOGGER.debug("Migrating legacy variable with id: [{}]", legacyVariableId);
+
+    if (isMigrated(legacyVariable.getProcessInstanceId())) {
+      String legacyProcessInstanceId = legacyVariable.getProcessInstanceId();
+      ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyProcessInstanceId);
+      if (isMigrated(legacyVariable.getActivityInstanceId())) {
+        Long processInstanceKey = processInstance.processInstanceKey();
+        Long scopeKey = findFlowNodeKey(legacyVariable.getActivityInstanceId()); // TODO does this cover scope correctly?
+        VariableDbModel dbModel = variableConverter.apply(legacyVariable, processInstanceKey, scopeKey);
+        variableMapper.insert(dbModel);
+        saveRecord(legacyVariableId, dbModel.variableKey(), IdKeyMapper.TYPE.HISTORY_VARIABLE);
+        LOGGER.debug("Migration of legacy variable with id [{}] completed.", legacyVariableId);
+      } else {
+        saveRecord(legacyVariableId, null, IdKeyMapper.TYPE.HISTORY_VARIABLE);
+        LOGGER.debug("Migration of legacy variable with id [{}] skipped. Activity instance not yet available.", legacyVariableId);
+      }
+    } else {
+      saveRecord(legacyVariableId, null, IdKeyMapper.TYPE.HISTORY_VARIABLE);
+      LOGGER.debug("Migration of legacy variable with id [{}] skipped. Process instance not yet available.", legacyVariableId);
+    }
+  }
+
+  public void migrateUserTasks() {
     LOGGER.info("Migrating user tasks");
 
-    HistoricTaskInstanceQueryImpl legacyTaskQuery = (HistoricTaskInstanceQueryImpl) historyService.createHistoricTaskInstanceQuery()
-        .orderByTaskId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_USER_TASK);
-    if (latestLegacyId != null) {
-      legacyTaskQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+      // TODO: handle retry
+    } else {
+      var legacyTaskQuery = (HistoricTaskInstanceQueryImpl) historyService.createHistoricTaskInstanceQuery().orderByTaskId().asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_USER_TASK);
+      if (latestLegacyId != null) {
+        legacyTaskQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<HistoricTaskInstance>()
+          .pageSize(getPageSize())
+          .query(legacyTaskQuery)
+          .callback(this::migrateHistoricUserTask);
     }
-
-    new Pagination<HistoricTaskInstance>()
-        .pageSize(getPageSize())
-        .query(legacyTaskQuery)
-        .callback(legacyUserTask -> {
-          String legacyUserTaskId = legacyUserTask.getId();
-          LOGGER.debug("Migrating legacy user task with id: [{}]", legacyUserTaskId);
-          ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyUserTask.getProcessInstanceId());
-          if (processInstance != null) {
-            Long elementInstanceKey = findFlowNodeKey(legacyUserTask.getActivityInstanceId());
-            if (elementInstanceKey != null) {
-              Long processDefinitionKey = findProcessDefinitionKey(legacyUserTask.getProcessDefinitionId());
-              UserTaskDbModel dbModel = userTaskConverter.apply(legacyUserTask, processDefinitionKey, processInstance,
-                  elementInstanceKey);
-              userTaskMapper.insert(dbModel);
-              insertKeyIdMapping(legacyUserTaskId, dbModel.userTaskKey(), IdKeyMapper.TYPE.HISTORY_USER_TASK);
-              LOGGER.debug("Migration of legacy user task with id [{}] completed.", legacyUserTaskId);
-            } else {
-              LOGGER.debug("Migration of legacy user task with id [{}] skipped. Flow node instance yet not available.",
-                  legacyUserTaskId);
-            }
-          } else {
-            LOGGER.debug("Migration of legacy user task with id [{}] skipped. Process instance [{}] not yet available.",
-                legacyUserTaskId, legacyUserTask.getProcessInstanceId());
-          }
-        });
   }
 
-  private void migrateFlowNodes() {
+  private void migrateHistoricUserTask(HistoricTaskInstance legacyUserTask) {
+    String legacyUserTaskId = legacyUserTask.getId();
+    LOGGER.debug("Migrating legacy user task with id: [{}]", legacyUserTaskId);
+    ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyUserTask.getProcessInstanceId());
+    if (isMigrated(legacyUserTask.getProcessInstanceId())) {
+      if (isMigrated(legacyUserTask.getActivityInstanceId())) {
+        Long elementInstanceKey = findFlowNodeKey(legacyUserTask.getActivityInstanceId());
+        Long processDefinitionKey = findProcessDefinitionKey(legacyUserTask.getProcessDefinitionId());
+        UserTaskDbModel dbModel = userTaskConverter.apply(legacyUserTask, processDefinitionKey, processInstance, elementInstanceKey);
+        userTaskMapper.insert(dbModel);
+        saveRecord(legacyUserTaskId, dbModel.userTaskKey(), IdKeyMapper.TYPE.HISTORY_USER_TASK);
+        LOGGER.debug("Migration of legacy user task with id [{}] completed.", legacyUserTaskId);
+      } else {
+        saveRecord(legacyUserTaskId, null, IdKeyMapper.TYPE.HISTORY_USER_TASK);
+        LOGGER.debug("Migration of legacy user task with id [{}] skipped. Flow node instance yet not available.", legacyUserTaskId);
+      }
+    } else {
+      saveRecord(legacyUserTaskId, null, IdKeyMapper.TYPE.HISTORY_USER_TASK);
+      LOGGER.debug("Migration of legacy user task with id [{}] skipped. Process instance [{}] not yet available.", legacyUserTaskId, legacyUserTask.getProcessInstanceId());
+    }
+  }
+
+  public void migrateFlowNodes() {
     LOGGER.info("Migrating flow nodes");
 
-    HistoricActivityInstanceQueryImpl legacyFlowNodeQuery = (HistoricActivityInstanceQueryImpl) historyService.createHistoricActivityInstanceQuery()
-        .orderByHistoricActivityInstanceId()
-        .asc();
-
-    String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_FLOW_NODE);
-    if (latestLegacyId != null) {
-      legacyFlowNodeQuery.idAfter(latestLegacyId);
+    if (RETRY_SKIPPED.equals(mode)) {
+      // TODO: handle retry
+    } else {
+      var legacyFlowNodeQuery = (HistoricActivityInstanceQueryImpl) historyService.createHistoricActivityInstanceQuery().orderByHistoricActivityInstanceId().asc();
+      String latestLegacyId = idKeyMapper.findLatestIdByType(IdKeyMapper.TYPE.HISTORY_FLOW_NODE);
+      if (latestLegacyId != null) {
+        legacyFlowNodeQuery.idAfter(latestLegacyId);
+      }
+      new Pagination<HistoricActivityInstance>()
+          .pageSize(getPageSize())
+          .query(legacyFlowNodeQuery)
+          .callback(this::migrateHistoricFlowNode);
     }
-
-    new Pagination<HistoricActivityInstance>()
-        .pageSize(getPageSize())
-        .query(legacyFlowNodeQuery)
-        .callback(legacyFlowNode -> {
-          String legacyFlowNodeId = legacyFlowNode.getId();
-          LOGGER.debug("Migrating legacy flow node with id: [{}]", legacyFlowNodeId);
-          ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyFlowNode.getProcessInstanceId());
-          if (processInstance != null) {
-            Long processInstanceKey = processInstance.processInstanceKey();
-            Long processDefinitionKey = findProcessDefinitionKey(legacyFlowNode.getProcessDefinitionId());
-            FlowNodeInstanceDbModel dbModel = flowNodeConverter.apply(legacyFlowNode, processDefinitionKey, processInstanceKey);
-            flowNodeMapper.insert(dbModel);
-            insertKeyIdMapping(legacyFlowNodeId, dbModel.flowNodeInstanceKey(), IdKeyMapper.TYPE.HISTORY_FLOW_NODE);
-            LOGGER.debug("Migration of legacy flow node with id [{}] completed.", legacyFlowNodeId);
-          } else {
-            LOGGER.debug("Migration of legacy flow node with id [{}] skipped. Process instance not yet available.",
-                legacyFlowNodeId);
-          }
-        });
   }
 
-  protected void insertKeyIdMapping(String id, Long key, IdKeyMapper.TYPE type) {
-    var idKeyDbModel = new IdKeyDbModel();
-    idKeyDbModel.setId(id);
-    idKeyDbModel.setInstanceKey(key);
-    idKeyDbModel.setType(type);
-    idKeyMapper.insert(idKeyDbModel);
+  private void migrateHistoricFlowNode(HistoricActivityInstance legacyFlowNode) {
+    String legacyFlowNodeId = legacyFlowNode.getId();
+    LOGGER.debug("Migrating legacy flow node with id: [{}]", legacyFlowNodeId);
+    if (isMigrated(legacyFlowNode.getProcessInstanceId())) {
+      ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyFlowNode.getProcessInstanceId());
+      Long processInstanceKey = processInstance.processInstanceKey();
+      Long processDefinitionKey = findProcessDefinitionKey(legacyFlowNode.getProcessDefinitionId());
+      FlowNodeInstanceDbModel dbModel = flowNodeConverter.apply(legacyFlowNode, processDefinitionKey, processInstanceKey);
+      flowNodeMapper.insert(dbModel);
+      saveRecord(legacyFlowNodeId, dbModel.flowNodeInstanceKey(), IdKeyMapper.TYPE.HISTORY_FLOW_NODE);
+      LOGGER.debug("Migration of legacy flow node with id [{}] completed.", legacyFlowNodeId);
+    } else {
+      saveRecord(legacyFlowNodeId, null, IdKeyMapper.TYPE.HISTORY_FLOW_NODE);
+      LOGGER.debug("Migration of legacy flow node with id [{}] skipped. Process instance not yet available.", legacyFlowNodeId);
+    }
   }
 
   protected ProcessInstanceEntity findProcessInstanceByLegacyId(String processInstanceId) {
@@ -406,6 +426,18 @@ public class HistoryMigrator {
     }
 
     return processInstanceMapper.findOne(key);
+  }
+
+  private boolean isMigrated(String id) {
+    return dbClient.checkHasKey(id);
+  }
+
+  protected void saveRecord(String entityId, Long entityKey, IdKeyMapper.TYPE type) {
+    if (RETRY_SKIPPED.equals(mode)) {
+      dbClient.updateKeyById(entityId, entityKey, type);
+    } else if (MIGRATE.equals(mode)) {
+      dbClient.insert(entityId, entityKey, type);
+    }
   }
 
   private Long findProcessDefinitionKey(String processDefinitionId) {

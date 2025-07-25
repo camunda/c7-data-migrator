@@ -51,7 +51,7 @@ public abstract class HistoryMigrationAbstractTest {
   protected HistoryMigrator historyMigrator;
 
   @Autowired
-  private IdKeyMapper idKeyMapper;
+  protected IdKeyMapper idKeyMapper;
 
   // C7 ---------------------------------------
 

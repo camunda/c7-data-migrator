@@ -7,6 +7,7 @@
  */
 package io.camunda.migrator.impl.clients;
 
+import static io.camunda.migrator.impl.logging.DbClientLogs.FAILED_TO_CHECK_KEY;
 import static io.camunda.migrator.impl.util.ExceptionUtils.callApi;
 import static io.camunda.migrator.impl.logging.DbClientLogs.FAILED_TO_CHECK_EXISTENCE;
 import static io.camunda.migrator.impl.logging.DbClientLogs.FAILED_TO_FIND_LATEST_START_DATE;
@@ -21,6 +22,7 @@ import io.camunda.migrator.impl.util.PrintUtils;
 import io.camunda.migrator.impl.logging.DbClientLogs;
 import io.camunda.migrator.impl.persistence.IdKeyDbModel;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
+import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -48,6 +50,13 @@ public class DbClient {
   }
 
   /**
+   * Checks if a process instance exists in the mapping table.
+   */
+  public boolean checkHasKey(String legacyId) {
+    return callApi(() -> idKeyMapper.checkHasKey(legacyId), FAILED_TO_CHECK_KEY + legacyId);
+  }
+
+  /**
    * Finds the latest start date by type.
    */
   public Date findLatestStartDateByType(TYPE type) {
@@ -57,19 +66,28 @@ public class DbClient {
   /**
    * Updates a record by setting the key for an existing ID.
    */
-  public void updateKeyById(String legacyProcessInstanceId, Long processInstanceKey) {
+  public void updateKeyById(String legacyProcessInstanceId, Long processInstanceKey, TYPE type) {
     DbClientLogs.updatingKeyForLegacyId(legacyProcessInstanceId, processInstanceKey);
-    var model = createIdKeyDbModel(legacyProcessInstanceId, null, processInstanceKey);
+    var model = createIdKeyDbModel(legacyProcessInstanceId, null, processInstanceKey, type);
     callApi(() -> idKeyMapper.updateKeyById(model), FAILED_TO_UPDATE_KEY + processInstanceKey);
   }
 
   /**
    * Inserts a new record into the mapping table.
    */
-  public void insert(String legacyProcessInstanceId, Date startDate, Long processInstanceKey) {
-    DbClientLogs.insertingRecord(legacyProcessInstanceId, startDate, processInstanceKey);
-    var model = createIdKeyDbModel(legacyProcessInstanceId, startDate, processInstanceKey);
-    callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyProcessInstanceId);
+  public void insert(String legacyId, Date startDate, Long key, TYPE type) {
+    DbClientLogs.insertingRecord(legacyId, startDate, key);
+    var model = createIdKeyDbModel(legacyId, startDate, key, type);
+    callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyId);
+  }
+
+  /**
+   * Inserts a new record into the mapping table.
+   */
+  public void insert(String legacyId, Long key, TYPE type) {
+    DbClientLogs.insertingRecord(legacyId, null, key);
+    var model = createIdKeyDbModel(legacyId, null, key, type);
+    callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyId);
   }
 
   /**
@@ -89,12 +107,12 @@ public class DbClient {
   /**
    * Processes skipped process instances with pagination.
    */
-  public void fetch(Consumer<IdKeyDbModel> callback) {
+  public void fetchSkipped(TYPE type, Consumer<IdKeyDbModel> callback) {
     new Pagination<IdKeyDbModel>()
         .pageSize(properties.getPageSize())
         .maxCount(idKeyMapper::findSkippedCount)
         // Hardcode offset to 0 since each callback updates the database and leads to fresh results.
-        .page(offset -> idKeyMapper.findSkipped(0, properties.getPageSize()))
+        .page(offset -> idKeyMapper.findSkippedByType(type, 0, properties.getPageSize()))
         .callback(callback);
   }
 
@@ -105,12 +123,12 @@ public class DbClient {
     return callApi(idKeyMapper::findSkippedCount, FAILED_TO_FIND_SKIPPED_COUNT);
   }
 
-  protected IdKeyDbModel createIdKeyDbModel(String id, Date startDate, Long key) {
+  protected IdKeyDbModel createIdKeyDbModel(String id, Date startDate, Long key, TYPE type) {
     var keyIdDbModel = new IdKeyDbModel();
     keyIdDbModel.setId(id);
     keyIdDbModel.setStartDate(startDate);
     keyIdDbModel.setInstanceKey(key);
-    keyIdDbModel.setType(TYPE.RUNTIME_PROCESS_INSTANCE);
+    keyIdDbModel.setType(type);
     return keyIdDbModel;
   }
 
