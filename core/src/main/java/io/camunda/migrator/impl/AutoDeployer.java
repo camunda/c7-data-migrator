@@ -7,10 +7,9 @@
  */
 package io.camunda.migrator.impl;
 
-import io.camunda.client.CamundaClient;
-import io.camunda.client.api.command.DeployResourceCommandStep1;
 import io.camunda.migrator.config.property.C8Properties;
 import io.camunda.migrator.config.property.MigratorProperties;
+import io.camunda.migrator.impl.clients.C8Client;
 import io.camunda.migrator.impl.util.ExceptionUtils;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,25 +31,14 @@ public class AutoDeployer {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AutoDeployer.class);
 
   @Autowired
-  protected CamundaClient camundaClient;
+  protected C8Client c8Client;
 
   @Autowired
   protected MigratorProperties migratorProperties;
 
   public void deploy() {
-    // Deploy process
-    var deployResource = camundaClient.newDeployResourceCommand();
-
     Set<Path> models = getDeploymentResources();
-
-    DeployResourceCommandStep1.DeployResourceCommandStep2 deployResourceCommandStep2 = null;
-    for (Path model : models) {
-      deployResourceCommandStep2 = deployResource.addResourceFile(model.toString());
-    }
-
-    if (deployResourceCommandStep2 != null) {
-      deployResourceCommandStep2.execute();
-    }
+    c8Client.deployResources(models);
   }
 
   public Set<Path> getDeploymentResources() {

@@ -1,43 +1,25 @@
 #!/bin/bash
 BASEDIR=$(dirname "$0")
-CONFIGURATION="$BASEDIR/configuration/application.yml"
-DEPLOYMENT_DIR="$BASEDIR/configuration/resources"
-classPath="$BASEDIR/configuration/userlib"
 
-JAR_PATH="$BASEDIR/internal/c7-data-migrator.jar"
-COMMON_OPTS="-Dloader.path=$classPath -Dmigrator.deployment-dir=$DEPLOYMENT_DIR -Dspring.config.location=file:$CONFIGURATION"
+# Load configuration from central properties file
+PROPS_FILE="$BASEDIR/internal/launcher.properties"
 
-print_usage() {
-  echo "Usage: start.sh [--runtime] [--history] [--list-skipped|--retry-skipped]"
-  echo "Options:"
-  echo "  --runtime         - Migrate runtime data only"
-  echo "  --history         - Migrate history data only"
-  echo "  --list-skipped    - List previously skipped data"
-  echo "  --retry-skipped   - Retry only previously skipped data"
+# Function to read property from file
+get_property() {
+    grep "^$1=" "$PROPS_FILE" | cut -d'=' -f2-
 }
 
-if [[ $# -gt 3 ]]; then
-  echo "Error: Too many arguments."
-  print_usage
-  exit 1
-fi
+# Read configuration values
+JAR_PATH="$BASEDIR/$(get_property "JAR_PATH")"
+CONFIGURATION="$BASEDIR/$(get_property "CONFIGURATION")"
+DEPLOYMENT_DIR="$BASEDIR/$(get_property "DEPLOYMENT_DIR")"
+CLASSPATH="$BASEDIR/$(get_property "CLASSPATH")"
 
-for arg in "$@"; do
-  case "$arg" in
-    --runtime|--history|--list-skipped|--retry-skipped)
-      ;;
-    *)
-      echo "Invalid flag: $arg"
-      print_usage
-      exit 1
-      ;;
-  esac
-done
+# Build Java options from template
+JAVA_OPTS_TEMPLATE=$(get_property "JAVA_OPTS_TEMPLATE")
+JAVA_OPTS="${JAVA_OPTS_TEMPLATE//\{CLASSPATH\}/$CLASSPATH}"
+JAVA_OPTS="${JAVA_OPTS//\{DEPLOYMENT_DIR\}/$DEPLOYMENT_DIR}"
+JAVA_OPTS="${JAVA_OPTS//\{CONFIGURATION\}/$CONFIGURATION}"
 
-if [[ $# -eq 0 ]]; then
-  echo "Starting application without migration flags"
-  java $COMMON_OPTS -jar "$JAR_PATH"
-else
-  echo "Starting migration with flags: $*"
-  java $COMMON_OPTS -jar "$JAR_PATH" "$@"
-fi
+# Launch the JAR with system properties set as JVM arguments
+java $JAVA_OPTS -jar "$JAR_PATH" "$@"
