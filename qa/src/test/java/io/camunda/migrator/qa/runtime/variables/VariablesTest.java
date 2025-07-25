@@ -7,26 +7,36 @@
  */
 package io.camunda.migrator.qa.runtime.variables;
 
+import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VARIABLE_ERROR;
+import static io.camunda.migrator.impl.logging.VariableServiceLogs.JAVA_SERIALIZED_UNSUPPORTED_ERROR;
 import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.byProcessId;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.camunda.bpm.engine.variable.Variables.SerializationDataFormats.JSON;
+import static org.camunda.bpm.engine.variable.Variables.SerializationDataFormats.XML;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.camunda.client.api.command.ClientException;
 import io.camunda.client.api.search.response.ElementInstance;
 import io.camunda.client.api.search.response.Variable;
+import io.camunda.migrator.RuntimeMigrator;
 import io.camunda.migrator.qa.runtime.RuntimeMigrationAbstractTest;
 import io.camunda.process.test.api.CamundaAssert;
 
+import io.github.netmikey.logunit.api.LogCapturer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import org.awaitility.Awaitility;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.variable.VariableMap;
 import org.camunda.bpm.engine.variable.Variables;
 import org.camunda.bpm.engine.variable.value.FileValue;
+import org.camunda.bpm.engine.variable.value.ObjectValue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
@@ -36,6 +46,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.Map;
 
 public class VariablesTest extends RuntimeMigrationAbstractTest {
+
+  @RegisterExtension
+  protected final LogCapturer LOGS = LogCapturer.create().captureForType(RuntimeMigrator.class);
 
   public static final String SUB_PROCESS = "subProcess";
   public static final String PARALLEL = "parallel";
@@ -69,13 +82,10 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
     variables.putValue("stringVar", "myStringVar");
     variables.putValue("booleanVar", true);
     variables.putValue("integerVar", 1234);
-    variables.putValue("floatVar", 1.5f);
     variables.putValue("doubleVar", 1.5d);
     variables.putValue("shortVar", (short) 1);
-    variables.putValue("byteVar", (byte) 1);
-    variables.putValue("charVar", (char) 1);
 
-    var simpleProcessInstance = runtimeService.startProcessInstanceByKey("simpleProcess", variables);
+    runtimeService.startProcessInstanceByKey("simpleProcess", variables);
 
     // when running runtime migration
     runtimeMigrator.start();
@@ -84,36 +94,50 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
         .hasVariable("stringVar", "myStringVar")
         .hasVariable("booleanVar", true)
         .hasVariable("integerVar", 1234)
-        .hasVariable("floatVar", 1.5)
         .hasVariable("doubleVar", 1.5d)
-        .hasVariable("shortVar", (short) 1)
-        .hasVariable("byteVar", (byte) 1)
-        .hasVariable("charVar", (char) 1);
+        .hasVariable("shortVar", (short) 1);
   }
 
   @Test
-  public void shouldSetArrayVariables() {
+  public void shouldNotSetUnsupportedObjectTypes() {
     // deploy processes
     deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
-    List<String> stringList = Arrays.asList("one", "two", "three");
-    HashMap<Integer, String> map = new HashMap<Integer, String>();
-    map.put(1, "one");
-    map.put(2, "two");
 
-    // given process state in c7
-    VariableMap variables = Variables.createVariables();
-    variables.putValue("stringList", stringList);
-    variables.putValue("map", map);
-
-    var simpleProcessInstance = runtimeService.startProcessInstanceByKey("simpleProcess", variables);
+    String piIdFloat = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("floatVar", 1.5f)).getId();
+    String piIdByte = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("byteVar", (byte) 1)).getId();
+    String piIdChar = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("charVar", (char) 1)).getId();
+    String piIdList = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("stringList", Arrays.asList("one", "two", "three"))).getId();
+    String piIdMap = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("map", Collections.singletonMap(1, "one"))).getId();
 
     // when running runtime migration
     runtimeMigrator.start();
 
-    CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("stringList", stringList)
-        .hasVariable("map", map);
+    // then
+    assertThatProcessInstanceCountIsEqualTo(0);
+
+    Arrays.asList(piIdFloat, piIdByte, piIdChar, piIdList, piIdMap)
+        .forEach(piId -> LOGS.assertContains(
+            String.format(SKIPPING_PROCESS_INSTANCE_VARIABLE_ERROR.replace("{}", "%s"), piId,
+                JAVA_SERIALIZED_UNSUPPORTED_ERROR)));
   }
+
+  @Test
+  public void shouldNotSetUnsupportedBytesType() {
+    // deploy processes
+    deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
+
+    String legacyId = runtimeService.startProcessInstanceByKey("simpleProcess", Collections.singletonMap("bytesVar", "foo".getBytes())).getId();
+
+    // when running runtime migration
+    runtimeMigrator.start();
+
+    // then
+    assertThatProcessInstanceCountIsEqualTo(0);
+    LOGS.assertContains(
+        String.format(SKIPPING_PROCESS_INSTANCE_VARIABLE_ERROR.replace("{}", "%s"), legacyId,
+            "Type 'byte[]' is unsupported in C8."));
+  }
+
   @Test
   public void shouldSetInvalidVariableNameInFeel() {
     // deploy processes
@@ -158,46 +182,109 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
   }
 
   @Test
-  public void shouldSetXmlVariable() throws JsonProcessingException {
+  public void shouldSetXmlObjectVariable() {
     // deploy processes
     deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
 
     // given process state in c7
     var simpleProcessInstance = runtimeService.startProcessInstanceByKey("simpleProcess");
 
-    XmlSerializable foo = new XmlSerializable("a String", 42, true);
-    String xml = objectMapper.writeValueAsString(foo);
-    runtimeService.setVariable(simpleProcessInstance.getId(), "var", xml);
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" +
+        "<xmlSerializable>" +
+          "<booleanProperty>true</booleanProperty>" +
+          "<intProperty>42</intProperty>" +
+          "<stringProperty>a String</stringProperty>" +
+        "</xmlSerializable>";
+
+    ObjectValue objectValue = Variables.serializedObjectValue(xml)
+        .serializationDataFormat(XML)
+        .objectTypeName("io.camunda.migrator.qa.runtime.variables.XmlSerializable")
+        .create();
+
+    runtimeService.setVariable(simpleProcessInstance.getId(), "var", objectValue);
 
     // when running runtime migration
     runtimeMigrator.start();
 
+    // then
     CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("var", "{\"stringProperty\":\"a String\",\"intProperty\":42,\"booleanProperty\":true}");
+        .hasVariable("var", xml);
   }
 
   @Test
-  public void shouldSetJsonVariable() throws JsonProcessingException {
+  public void shouldSetGlobalJsonObjectVariable() throws JsonProcessingException {
     // deploy processes
     deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
 
     // given process state in c7
     var simpleProcessInstance = runtimeService.startProcessInstanceByKey("simpleProcess");
 
-    JsonSerializable foo = new JsonSerializable("a String", 42, true);
-    String json = objectMapper.writeValueAsString(foo);
-    runtimeService.setVariable(simpleProcessInstance.getId(), "var", json);
+    String json = "{\"stringProperty\":\"a String\",\"intProperty\":42,\"booleanProperty\":true}";
+    ObjectValue objectValue = Variables.serializedObjectValue(json)
+        .serializationDataFormat(JSON)
+        .objectTypeName("io.camunda.migrator.qa.runtime.variables.JsonSerializable")
+        .create();
+
+    runtimeService.setVariable(simpleProcessInstance.getId(), "var", objectValue);
 
     // when running runtime migration
     runtimeMigrator.start();
 
     CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("var", "{\"stringProperty\":\"a String\",\"intProperty\":42,\"booleanProperty\":true}");
+        .hasVariable("var", objectMapper.readValue(json, JsonNode.class));
   }
 
   @Test
-  @Disabled // To be adjusted or removed with https://github.com/camunda/camunda-bpm-platform/issues/4989
-  public void shouldSetFileVariable() throws JsonProcessingException {
+  public void shouldNotSetJsonObjectDueToSyntaxError() {
+    // deploy processes
+    deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
+
+    // given process state in c7
+    String legacyId = runtimeService.startProcessInstanceByKey("simpleProcess").getId();
+
+    String json = "{ broken syntax!";
+    ObjectValue objectValue = Variables.serializedObjectValue(json)
+        .serializationDataFormat(JSON)
+        .objectTypeName("io.camunda.migrator.qa.runtime.variables.JsonSerializable")
+        .create();
+
+    runtimeService.setVariable(legacyId, "var", objectValue);
+
+    // when running runtime migration
+    runtimeMigrator.start();
+
+    // then
+    assertThatProcessInstanceCountIsEqualTo(0);
+    LOGS.assertContains(String.format(SKIPPING_PROCESS_INSTANCE_VARIABLE_ERROR.replace("{}", "%s"), legacyId,
+        "Error while deserializing JSON into Map type."));
+  }
+
+  @Test
+  public void shouldSetLocalJsonObjectVariable() throws JsonProcessingException {
+    // deploy processes
+    deployer.deployProcessInC7AndC8("parallelGateway.bpmn");
+
+    // given process state in c7
+    runtimeService.startProcessInstanceByKey("ParallelGatewayProcess");
+
+    String json = "{\"stringProperty\":\"a String\",\"intProperty\":42,\"booleanProperty\":true}";
+    ObjectValue objectValue = Variables.serializedObjectValue(json)
+        .serializationDataFormat(JSON)
+        .objectTypeName("io.camunda.migrator.qa.runtime.variables.JsonSerializable")
+        .create();
+
+    String activityInstanceId = runtimeService.createExecutionQuery().activityId("usertaskActivity").singleResult().getId();
+    runtimeService.setVariable(activityInstanceId, "var", objectValue);
+
+    // when running runtime migration
+    runtimeMigrator.start();
+
+    CamundaAssert.assertThat(byProcessId("ParallelGatewayProcess"))
+        .hasVariable("var", objectMapper.readValue(json, JsonNode.class));
+  }
+
+  @Test
+  public void shouldNotSetFileVariable() {
     // deploy processes
     deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
 
@@ -213,13 +300,16 @@ public class VariablesTest extends RuntimeMigrationAbstractTest {
         .create();
 
     VariableMap fileVar = Variables.createVariables().putValueTyped("fileVar", fileValue);
-    var simpleProcessInstance = runtimeService.startProcessInstanceByKey("simpleProcess",Variables.createVariables().putValueTyped("fileVar", fileValue));
+    String legacyId = runtimeService.startProcessInstanceByKey("simpleProcess", fileVar).getId();
 
     // when running runtime migration
     runtimeMigrator.start();
 
     // then
-    // assert c8 variable value
+    assertThatProcessInstanceCountIsEqualTo(0);
+    LOGS.assertContains(
+        String.format(SKIPPING_PROCESS_INSTANCE_VARIABLE_ERROR.replace("{}", "%s"), legacyId,
+            "Type 'file' is unsupported in C8."));
   }
 
   @Test

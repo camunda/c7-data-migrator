@@ -8,24 +8,24 @@
 package io.camunda.migrator.qa.runtime.variables;
 
 import static io.camunda.process.test.api.assertions.ProcessInstanceSelectors.byProcessId;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.camunda.client.api.command.ClientException;
-import io.camunda.client.api.search.response.Variable;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.camunda.migrator.qa.runtime.RuntimeMigrationAbstractTest;
 import io.camunda.process.test.api.CamundaAssert;
-import java.util.List;
-import org.awaitility.Awaitility;
 import org.camunda.spin.json.SpinJsonNode;
 import org.camunda.spin.plugin.variable.SpinValues;
 import org.camunda.spin.plugin.variable.value.JsonValue;
 import org.camunda.spin.plugin.variable.value.XmlValue;
 import org.camunda.spin.xml.SpinXmlElement;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class SpinVariablesTest extends RuntimeMigrationAbstractTest {
+
+  @Autowired
+  protected ObjectMapper objectMapper;
 
   @Test
   public void shouldSetSpinJsonVariable() throws JsonProcessingException {
@@ -51,12 +51,11 @@ public class SpinVariablesTest extends RuntimeMigrationAbstractTest {
 
     // then
     CamundaAssert.assertThat(byProcessId("simpleProcess"))
-        .hasVariable("var", c7value.toString());
+        .hasVariable("var", objectMapper.readValue(c7value.toString(), JsonNode.class));
   }
 
   @Test
-  @Disabled // TODO https://github.com/camunda/camunda-bpm-platform/issues/5246
-  public void shouldSetXmlVariable() throws JsonProcessingException {
+  public void shouldSetXmlVariable() {
     // deploy processes
     deployer.deployProcessInC7AndC8("simpleProcess.bpmn");
 
@@ -80,15 +79,6 @@ public class SpinVariablesTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then
-    Awaitility.await().ignoreException(ClientException.class).untilAsserted(() -> {
-
-      List<Variable> items = camundaClient.newVariableSearchRequest().filter(f -> f.name("var")).execute().items();
-
-      assertThat(items).hasSize(1);
-      assertThat(items.get(0).getValue()).contains(street);
-      assertThat(items.get(0).getValue()).contains(postcode);
-    });
-//    CamundaAssert.assertThat(byProcessId("simpleProcess"))
-//        .hasVariable("var", xml);
+    CamundaAssert.assertThat(byProcessId("simpleProcess")).hasVariable("var", c7value.toString());
   }
 }

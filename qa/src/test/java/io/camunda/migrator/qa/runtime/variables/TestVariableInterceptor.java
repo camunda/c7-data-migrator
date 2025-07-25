@@ -27,7 +27,7 @@ public class TestVariableInterceptor implements VariableInterceptor {
   protected static final String EXPECTED_EXCEPTION_MESSAGE = "Expected exception from Interceptor";
 
   @Override
-  public void execute(VariableInvocation invocation) throws Exception {
+  public void execute(VariableInvocation invocation) {
     LOGGER.debug(INTERCEPTOR_START_MESSAGE, TestVariableInterceptor.class,
         invocation.getC7Variable().getName());
     if (invocation.getC7Variable().getName().equals("varIntercept")) {

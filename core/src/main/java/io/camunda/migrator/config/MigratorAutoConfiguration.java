@@ -21,8 +21,8 @@ import io.camunda.migrator.config.mybatis.MigratorConfiguration;
 import io.camunda.migrator.config.property.DataSourceProperties;
 import io.camunda.migrator.config.property.MigratorProperties;
 import io.camunda.migrator.converter.ConverterConfiguration;
-import io.camunda.migrator.impl.DateVariableInterceptor;
-import io.camunda.migrator.impl.DefaultVariableInterceptor;
+import io.camunda.migrator.impl.BuiltInDateVariableTransformer;
+import io.camunda.migrator.impl.BuiltInVariableTransformer;
 import io.camunda.migrator.impl.clients.C7Client;
 import io.camunda.migrator.impl.clients.C8Client;
 import io.camunda.migrator.impl.clients.DbClient;
@@ -144,13 +144,13 @@ public class MigratorAutoConfiguration {
   protected PlatformTransactionManager c7TransactionManager;
 
   @Bean
-  public DefaultVariableInterceptor defaultVariableInterceptor() {
-    return new DefaultVariableInterceptor();
+  public BuiltInVariableTransformer defaultVariableInterceptor() {
+    return new BuiltInVariableTransformer();
   }
 
   @Bean
-  public DateVariableInterceptor dateVariableInterceptor() {
-    return new DateVariableInterceptor();
+  public BuiltInDateVariableTransformer dateVariableInterceptor() {
+    return new BuiltInDateVariableTransformer();
   }
 
   @Bean

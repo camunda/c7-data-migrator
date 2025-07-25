@@ -22,7 +22,7 @@ public class VariableInvocation {
       throw new IllegalArgumentException("Variable cannot be null");
     }
     this.c7Variable = variable;
-    this.migrationVariable = new MigrationVariableDto(variable.getName(), variable.getValue());
+    this.migrationVariable = new MigrationVariableDto(variable.getName(), variable.getTypedValue(false));
   }
 
   /**
