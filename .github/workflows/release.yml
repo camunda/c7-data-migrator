@@ -147,7 +147,7 @@ jobs:
         if: ${{ !inputs.ONLY_PUSH_TO_MAVEN_CENTRAL }}
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts-${RELEASE_VERSION}
+          name: release-artifacts-${{ env.RELEASE_VERSION }}
           path: ${{ steps.release-artifacts.outputs.dir }}
           retention-days: 14
 
