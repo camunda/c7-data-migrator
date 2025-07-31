@@ -185,3 +185,59 @@ jobs:
             -DlocalCheckout=${{ inputs.IS_DRY_RUN }} \
             -Pcentral-sonatype-publish,central-release \
             -DskipTests=true -Dskip.central.release=${SKIP_REPO_DEPLOY} -Dskip.camunda.release=true
+
+  docker-image:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: release
+    if: ${{ inputs.IS_DRY_RUN }} # TODO: negate this before merging. For testing purposes we want to publish the image even in dry run mode.
+    timeout-minutes: 30
+
+    steps:
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts-${{ env.RELEASE_VERSION }}
+          path: ./artifacts
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Import Vault Secrets for Registry Auth
+        id: vault-secrets
+        uses: hashicorp/vault-action@v3.4.0
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secret/data/products/cambpm/ci/registry-camunda-cloud REGISTRY_USERNAME;
+            secret/data/products/cambpm/ci/registry-camunda-cloud REGISTRY_PASSWORD;
+
+      - name: Login to Camunda Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.camunda.cloud
+          username: ${{ steps.vault-secrets.outputs.REGISTRY_USERNAME }}
+          password: ${{ steps.vault-secrets.outputs.REGISTRY_PASSWORD }}
+
+      - name: Prepare Docker Context
+        run: |
+          mkdir -p docker-context
+          cd docker-context
+          tar -xzf ../artifacts/c7-data-migrator-assembly-${{ env.RELEASE_VERSION }}.tar.gz
+          
+          # Create Dockerfile
+          cat > Dockerfile << 'EOF'
+          FROM scratch
+          COPY . /
+          EOF
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker-context
+          push: true
+          tags: registry.camunda.cloud/team-cambpm/c7-to-c8-data-migrator:${{ env.RELEASE_VERSION }}
+          platforms: linux/arm64
