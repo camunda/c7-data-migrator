@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:camunda="http://camunda.org/schema/1.0/dmn" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="simpleDmnWithReqsId" name="simpleDmnWithReqsName" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.24.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <decision id="simpleDmnWithReqs1Id" name="simpleDmnWithReqs1Name" camunda:historyTimeToLive="180">
+    <decisionTable id="decisionTable1Id">
+      <input id="Input_1">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text></text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" typeRef="string" />
+      <rule id="DecisionRule_0ogxiwg">
+        <inputEntry id="UnaryTests_0z3jjio">
+          <text>"A"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_05sqkbt">
+          <text>"B"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="simpleDmnWithReqs2Id" name="simpleDmnWithReqs2Name" camunda:historyTimeToLive="180">
+    <informationRequirement id="informationRequirementId">
+      <requiredDecision href="#simpleDmnWithReqs1Id" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1jv5g6j">
+      <input id="InputClause_0r96y1o">
+        <inputExpression id="LiteralExpression_1g7ifox" typeRef="string" />
+      </input>
+      <output id="OutputClause_1chdy58" typeRef="string" />
+      <rule id="DecisionRule_1itcc5z">
+        <inputEntry id="UnaryTests_0a5k9fi">
+          <text>"B"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0sl7zql">
+          <text>"C"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="simpleDmnWithReqs1Id">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_075wz07" dmnElementRef="informationRequirementId">
+        <di:waypoint x="250" y="180" />
+        <di:waypoint x="250" y="240" />
+        <di:waypoint x="250" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_1twzi5g" dmnElementRef="simpleDmnWithReqs2Id">
+        <dc:Bounds height="80" width="180" x="160" y="260" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

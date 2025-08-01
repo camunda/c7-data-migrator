@@ -7,24 +7,25 @@
  */
 package io.camunda.migrator.converter;
 
-import io.camunda.db.rdbms.write.domain.DecisionDefinitionDbModel;
-import org.camunda.bpm.engine.repository.DecisionDefinition;
-
 import static io.camunda.migrator.impl.util.ConverterUtil.getNextKey;
+
+import io.camunda.db.rdbms.write.domain.DecisionDefinitionDbModel;
+import org.apache.commons.lang3.StringUtils;
+import org.camunda.bpm.engine.repository.DecisionDefinition;
 
 public class DecisionDefinitionConverter {
 
-  public DecisionDefinitionDbModel apply(DecisionDefinition legacyDecisionDefinition) {
+  public DecisionDefinitionDbModel apply(DecisionDefinition legacyDecisionDefinition, Long decisionRequirementsKey) {
 
-    return new DecisionDefinitionDbModel.DecisionDefinitionDbModelBuilder()
-        .decisionDefinitionKey(getNextKey())
+    return new DecisionDefinitionDbModel.DecisionDefinitionDbModelBuilder().decisionDefinitionKey(getNextKey())
         .name(legacyDecisionDefinition.getName())
         .decisionDefinitionId(legacyDecisionDefinition.getKey())
-        .tenantId(legacyDecisionDefinition.getTenantId())
+        .tenantId(StringUtils.isEmpty(legacyDecisionDefinition.getTenantId())
+            ? "<default>"
+            : legacyDecisionDefinition.getTenantId())
         .version(legacyDecisionDefinition.getVersion())
-        .decisionRequirementsId(legacyDecisionDefinition.getDecisionRequirementsDefinitionId())
-        .decisionRequirementsKey(null) //TODO C7 decision requirement key is String ?
+        .decisionRequirementsId(legacyDecisionDefinition.getDecisionRequirementsDefinitionKey())
+        .decisionRequirementsKey(decisionRequirementsKey)
         .build();
   }
-
 }
