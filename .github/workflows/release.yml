@@ -226,7 +226,7 @@ jobs:
         run: |
           mkdir -p docker-context
           cd docker-context
-          tar -xzf ../artifacts/c7-data-migrator-assembly-${{ env.RELEASE_VERSION }}.tar.gz
+          tar -xzf ../artifacts/c7-data-migrator-${{ env.RELEASE_VERSION }}.tar.gz
           
           # Create Dockerfile
           cat > Dockerfile << 'EOF'
