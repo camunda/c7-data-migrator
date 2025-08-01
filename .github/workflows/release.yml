@@ -212,15 +212,15 @@ jobs:
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            secret/data/products/cambpm/ci/registry-camunda-cloud REGISTRY_USERNAME;
-            secret/data/products/cambpm/ci/registry-camunda-cloud REGISTRY_PASSWORD;
+            secret/data/products/cambpm/ci/registry-camunda-cloud NEXUS_APP_CAMUNDA_COM_USR;
+            secret/data/products/cambpm/ci/registry-camunda-cloud NEXUS_APP_CAMUNDA_COM_PSW;
 
       - name: Login to Camunda Registry
         uses: docker/login-action@v3
         with:
           registry: registry.camunda.cloud
-          username: ${{ steps.vault-secrets.outputs.REGISTRY_USERNAME }}
-          password: ${{ steps.vault-secrets.outputs.REGISTRY_PASSWORD }}
+          username: ${{ steps.vault-secrets.outputs.NEXUS_APP_CAMUNDA_COM_USR }}
+          password: ${{ steps.vault-secrets.outputs.NEXUS_APP_CAMUNDA_COM_PSW }}
 
       - name: Prepare Docker Context
         run: |
