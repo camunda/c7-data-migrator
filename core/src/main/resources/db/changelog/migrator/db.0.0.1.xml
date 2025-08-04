@@ -15,12 +15,18 @@
   <changeSet id="create_migration_mapping_table" author="Camunda">
     <createTable tableName="${prefix}MIGRATION_MAPPING">
       <column name="ID" type="VARCHAR(64)">
-        <constraints primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
       <column name="INSTANCE_KEY" type="BIGINT" />
-      <column name="TYPE" type="VARCHAR(255)" />
+      <column name="TYPE" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
       <column name="START_DATE" type="TIMESTAMP WITH TIME ZONE(3)" />
     </createTable>
+
+    <addPrimaryKey tableName="${prefix}MIGRATION_MAPPING"
+                  columnNames="ID, TYPE"
+                  constraintName="${prefix}PK_MIGRATION_MAPPING"/>
 
     <createIndex tableName="${prefix}MIGRATION_MAPPING" indexName="${prefix}IDX_MIGRATION_MAPPING_INSTANCE_KEY">
       <column name="INSTANCE_KEY" />
