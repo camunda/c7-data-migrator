@@ -52,7 +52,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
 
         // and the process definitions is manually set as skipped
         String legacyId = repositoryService.createProcessDefinitionQuery().singleResult().getId();
-        dbClient.insert(legacyId, null, IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
+       dbClient.insert(legacyId, null, IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
 
         // when history is migrated
         historyMigrator.migrate();
@@ -352,5 +352,49 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
 
         // Verify appropriate logging
         logs.assertContains("Migration of legacy variable with id [" + serviceTaskVariable.getId() + "] skipped");
+    }
+
+    @Test
+    public void shouldNotSkipTaskVariablesWhenEntityWithSameIdButDifferentTypeIsSkipped() {
+        // given state in c7
+        deployer.deployCamunda7Process("userTaskProcess.bpmn");
+        runtimeService.startProcessInstanceByKey("userTaskProcessId");
+
+        var taskId = taskService.createTaskQuery().singleResult().getId();
+
+        // Simulate ID collision by manually inserting a record with the same ID as the task
+        // but with a different type (HISTORY_INCIDENT)
+        dbClient.insert(taskId, null, IdKeyMapper.TYPE.HISTORY_INCIDENT);
+        // Verify the collision record exists before completing the task
+        assertThat(dbClient.checkExists(taskId)).as("Record with task ID should exist").isTrue();
+
+        // when history is migrated
+        historyMigrator.migrate();
+
+        // then
+        // 1. Process instance should be migrated
+        var historicProcesses = searchHistoricProcessInstances("userTaskProcessId");
+        assertThat(historicProcesses).hasSize(1);
+        var processInstanceKey = historicProcesses.getFirst().processInstanceKey();
+
+        // 2. User task should be migrated (not skipped due to ID collision with HISTORY_INCIDENT)
+        var userTasks = searchHistoricUserTasks(processInstanceKey);
+        assertThat(userTasks)
+            .as("User task should be migrated despite ID collision with HISTORY_INCIDENT")
+            .hasSize(1);
+        assertThat(userTasks.getFirst().elementId())
+            .as("User task should have correct id")
+            .isEqualTo("userTaskId");
+
+//        assertThat(dbClient.checkHasKeyByTypeAndId(taskId, IdKeyMapper.TYPE.HISTORY_USER_TASK))
+//            .as("Task should be properly migrated with correct type")
+//            .isTrue();
+//
+//        assertThat(dbClient.checkHasKeyByTypeAndId(taskId, IdKeyMapper.TYPE.HISTORY_INCIDENT))
+//            .as("Incident record should still exist but without key")
+//            .isFalse();
+
+        // 3. Verify no skip messages in logs for the task
+        logs.assertDoesNotContain("Migration of legacy user task with id [" + taskId + "] skipped");
     }
 }

@@ -260,7 +260,7 @@ public class HistoryMigrator {
         Long processDefinitionKey = findProcessDefinitionKey(legacyProcessInstance.getProcessDefinitionId());
         String processDefinitionId = legacyProcessInstance.getProcessDefinitionId();
 
-        if(isMigrated(processDefinitionId)) {
+        if(isMigrated(processDefinitionId, HISTORY_PROCESS_DEFINITION)) {
           String legacySuperProcessInstanceId = legacyProcessInstance.getSuperProcessInstanceId();
           Long parentProcessInstanceKey = null;
           if (legacySuperProcessInstanceId != null) {
@@ -319,7 +319,7 @@ public class HistoryMigrator {
 
   private void migrateHistoricIncident(HistoricIncident legacyIncident) {
     String legacyIncidentId = legacyIncident.getId();
-    if (shouldMigrate(legacyIncidentId)) {
+    if (shouldMigrate(legacyIncidentId, HISTORY_INCIDENT)) {
       LOGGER.debug("Migrating legacy incident with id: [{}]", legacyIncidentId);
       ProcessInstanceEntity legacyProcessInstance = findProcessInstanceByLegacyId(
           legacyIncident.getProcessInstanceId());
@@ -373,22 +373,22 @@ public class HistoryMigrator {
 
   private void migrateHistoricVariable(HistoricVariableInstance legacyVariable) {
     String legacyVariableId = legacyVariable.getId();
-    if (shouldMigrate(legacyVariableId)) {
+    if (shouldMigrate(legacyVariableId, HISTORY_VARIABLE)) {
       LOGGER.debug("Migrating legacy variable with id: [{}]", legacyVariableId);
       String legacyProcessInstanceId = legacyVariable.getProcessInstanceId();
 
       // Skip variable if it belongs to a skipped task
       String taskId = legacyVariable.getTaskId();
-      if (taskId != null && !isMigrated(taskId)) {
+      if (taskId != null && !isMigrated(taskId, HISTORY_USER_TASK)) {
         saveRecord(legacyVariableId, null, IdKeyMapper.TYPE.HISTORY_VARIABLE);
         LOGGER.debug("Migration of legacy variable with id [{}] skipped. Associated task [{}] was skipped.",
             legacyVariableId, taskId);
         return;
       }
 
-      if (isMigrated(legacyProcessInstanceId)) {
+      if (isMigrated(legacyProcessInstanceId, HISTORY_PROCESS_INSTANCE)) {
         ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyProcessInstanceId);
-        if (isMigrated(legacyVariable.getActivityInstanceId())) {
+        if (isMigrated(legacyVariable.getActivityInstanceId(), HISTORY_FLOW_NODE)) {
           Long processInstanceKey = processInstance.processInstanceKey();
           Long scopeKey = findFlowNodeKey(
               legacyVariable.getActivityInstanceId()); // TODO does this cover scope correctly?
@@ -442,12 +442,12 @@ public class HistoryMigrator {
 
     private void migrateHistoricUserTask(HistoricTaskInstance legacyUserTask) {
       String legacyUserTaskId = legacyUserTask.getId();
-      if (shouldMigrate(legacyUserTaskId)) {
+      if (shouldMigrate(legacyUserTaskId, HISTORY_USER_TASK)) {
         LOGGER.debug("Migrating legacy user task with id: [{}]", legacyUserTaskId);
         ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(legacyUserTask.getProcessInstanceId());
-        if (isMigrated(legacyUserTask.getProcessInstanceId())) {
+        if (isMigrated(legacyUserTask.getProcessInstanceId(), HISTORY_PROCESS_INSTANCE)) {
           Long elementInstanceKey = findFlowNodeKey(legacyUserTask.getActivityInstanceId());
-          if (isMigrated(legacyUserTask.getActivityInstanceId())) {
+          if (isMigrated(legacyUserTask.getActivityInstanceId(), HISTORY_FLOW_NODE)) {
             Long processDefinitionKey = findProcessDefinitionKey(legacyUserTask.getProcessDefinitionId());
             UserTaskDbModel dbModel = userTaskConverter.apply(legacyUserTask, processDefinitionKey, processInstance,
                 elementInstanceKey);
@@ -494,7 +494,7 @@ public class HistoryMigrator {
 
     private void migrateHistoricFlowNode(HistoricActivityInstance legacyFlowNode) {
       String legacyFlowNodeId = legacyFlowNode.getId();
-      if (shouldMigrate(legacyFlowNodeId)) {
+      if (shouldMigrate(legacyFlowNodeId, HISTORY_FLOW_NODE)) {
         LOGGER.debug("Migrating legacy flow node with id: [{}]", legacyFlowNodeId);
         ProcessInstanceEntity processInstance = findProcessInstanceByLegacyId(
             legacyFlowNode.getProcessInstanceId());
@@ -586,15 +586,15 @@ public class HistoryMigrator {
     return migratorProperties.getPageSize();
   }
 
-  private boolean isMigrated(String id) {
-    return dbClient.checkHasKey(id);
+  private boolean isMigrated(String id, IdKeyMapper.TYPE type) {
+    return dbClient.checkHasKeyByTypeAndId(id, type);
   }
 
-  private boolean shouldMigrate(String id) {
-    if( mode == RETRY_SKIPPED) {
-      return !dbClient.checkHasKey(id);
+  private boolean shouldMigrate(String id, IdKeyMapper.TYPE type) {
+    if (mode == RETRY_SKIPPED) {
+      return !dbClient.checkHasKeyByTypeAndId(id, type);
     }
-    return !dbClient.checkExists(id);
+    return !dbClient.checkExistsByTypeAndId(id, type);
   }
 
   protected void saveRecord(String entityId, Long entityKey, IdKeyMapper.TYPE type) {

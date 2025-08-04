@@ -47,10 +47,25 @@
     AND INSTANCE_KEY IS NOT NULL
   </select>
 
+  <select id="checkHasKeyByTypeAndId" resultType="boolean">
+    SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+    FROM ${prefix}MIGRATION_MAPPING
+    WHERE ID = #{id, jdbcType=VARCHAR}
+    AND TYPE = #{type, jdbcType=VARCHAR}
+    AND INSTANCE_KEY IS NOT NULL
+  </select>
+
   <select id="checkExists" resultType="boolean" parameterType="java.lang.String">
     SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
     FROM ${prefix}MIGRATION_MAPPING
     WHERE ID = #{id, jdbcType=VARCHAR}
+  </select>
+
+  <select id="checkExistsByTypeAndId" resultType="boolean">
+    SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+    FROM ${prefix}MIGRATION_MAPPING
+    WHERE ID = #{id, jdbcType=VARCHAR}
+    AND TYPE = #{type, jdbcType=VARCHAR}
   </select>
 
   <select id="findLatestStartDateByType" parameterType="java.lang.String">
