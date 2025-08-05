@@ -7,6 +7,8 @@
  */
 package io.camunda.migrator.impl.util;
 
+import static io.camunda.migrator.impl.persistence.IdKeyMapper.TYPE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,11 +16,31 @@ public class PrintUtils {
 
   protected static final Logger PRINTER = LoggerFactory.getLogger("PRINTER");
 
-  public static final String PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE = "Previously skipped process instances:";
-  public static final String NO_SKIPPED_INSTANCES_MESSAGE = "No process instances were skipped during previous migration";
+  public static void printSkippedInstancesHeader(long count, TYPE entityType) {
+    String entityName = getEntityDisplayName(entityType);
+    String message = count > 0
+        ? "Previously skipped " + entityName + ":"
+        : "No " + entityName + " were skipped during previous migration";
+    print(message);
+  }
 
+  // Keep the old method for backward compatibility
   public static void printSkippedInstancesHeader(long count) {
-    print(count > 0 ? PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE : NO_SKIPPED_INSTANCES_MESSAGE);
+    printSkippedInstancesHeader(count, TYPE.RUNTIME_PROCESS_INSTANCE);
+  }
+
+  private static String getEntityDisplayName(TYPE type) {
+    return switch (type) {
+      case HISTORY_PROCESS_DEFINITION -> "process definitions";
+      case HISTORY_PROCESS_INSTANCE -> "process instances";
+      case HISTORY_FLOW_NODE -> "flow nodes";
+      case HISTORY_USER_TASK -> "user tasks";
+      case HISTORY_VARIABLE -> "variables";
+      case HISTORY_INCIDENT -> "incidents";
+      case HISTORY_DECISION_DEFINITION -> "decision definitions";
+      case HISTORY_DECISION_INSTANCE -> "decision instances";
+      case RUNTIME_PROCESS_INSTANCE -> "process instances";
+    };
   }
 
   public static void print(String message) {

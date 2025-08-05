@@ -12,8 +12,6 @@ import static io.camunda.migrator.MigratorMode.RETRY_SKIPPED;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.PROCESS_INSTANCE_NOT_EXISTS;
 import static io.camunda.migrator.impl.logging.RuntimeMigratorLogs.SKIPPING_PROCESS_INSTANCE_VALIDATION_ERROR;
 import static io.camunda.migrator.impl.logging.RuntimeValidatorLogs.MULTI_INSTANCE_LOOP_CHARACTERISTICS_ERROR;
-import static io.camunda.migrator.impl.util.PrintUtils.NO_SKIPPED_INSTANCES_MESSAGE;
-import static io.camunda.migrator.impl.util.PrintUtils.PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureTrue;
 
@@ -199,7 +197,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then all skipped process instances were listed
-    String regex = PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE + "\\R((?:.+\\R){9}.+)";
+    String regex = "Previously skipped process instances:" + "\\R((?:.+\\R){9}.+)";
     assertThat(output.getOut()).containsPattern(regex);
     Pattern pattern = Pattern.compile(regex);
     Matcher matcher = pattern.matcher(output.getOut());
@@ -220,7 +218,7 @@ class SkipAndRetryProcessInstancesTest extends RuntimeMigrationAbstractTest {
     runtimeMigrator.start();
 
     // then expected message is printed
-    assertThat(output.getOut().trim()).endsWith(NO_SKIPPED_INSTANCES_MESSAGE);
+    assertThat(output.getOut().trim()).endsWith("No process instances were skipped during previous migration");
 
     // and no migration was done
     assertThat(dbClient.findAllIds().size()).isEqualTo(0);

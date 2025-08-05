@@ -47,6 +47,7 @@ import io.camunda.migrator.impl.clients.DbClient;
 import io.camunda.migrator.impl.logging.HistoryMigratorLogs;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.migrator.impl.util.ExceptionUtils;
+import io.camunda.migrator.impl.util.PrintUtils;
 import io.camunda.search.entities.FlowNodeInstanceEntity;
 import io.camunda.search.entities.ProcessDefinitionEntity;
 import io.camunda.search.entities.ProcessInstanceEntity;
@@ -119,10 +120,29 @@ public class HistoryMigrator {
 
   public void start() {
     if (LIST_SKIPPED.equals(mode)) {
-      // TODO: list entities
+      printSkippedHistoryEntities();
     } else {
       migrate();
     }
+  }
+
+  private void printSkippedHistoryEntities() {
+    List<IdKeyMapper.TYPE> historyTypes = List.of(
+        HISTORY_PROCESS_DEFINITION,
+        HISTORY_PROCESS_INSTANCE,
+        HISTORY_FLOW_NODE,
+        HISTORY_USER_TASK,
+        HISTORY_VARIABLE,
+        HISTORY_INCIDENT,
+        HISTORY_DECISION_DEFINITION
+    );
+
+    historyTypes.forEach(this::printSkippedEntitiesForType);
+  }
+
+  private void printSkippedEntitiesForType(IdKeyMapper.TYPE type) {
+    PrintUtils.printSkippedInstancesHeader(dbClient.countSkippedByType(type), type);
+    dbClient.listSkippedEntitiesByType(type);
   }
 
   public void migrate() {
