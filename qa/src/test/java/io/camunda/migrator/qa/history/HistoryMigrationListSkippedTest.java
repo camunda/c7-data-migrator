@@ -82,7 +82,11 @@ public class HistoryMigrationListSkippedTest extends HistoryMigrationAbstractTes
         assertThat(historyService.createHistoricActivityInstanceQuery().count()).isEqualTo(12); // multiple flow nodes per instance
 
         // Mark the process definition as skipped
-        String processDefinitionId = repositoryService.createProcessDefinitionQuery().singleResult().getId();
+        String processDefinitionId = repositoryService.createProcessDefinitionQuery()
+            .processDefinitionKey("comprehensiveSkippingTestProcessId")
+            .latestVersion()
+            .singleResult()
+            .getId();
         dbClient.insert(processDefinitionId, null, IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION);
 
         // Run history migration to skip all entities
@@ -127,6 +131,7 @@ public class HistoryMigrationListSkippedTest extends HistoryMigrationAbstractTes
 
         // Assert user tasks - verify the actual user task IDs from C7
         List<String> expectedUserTaskIds = historyService.createHistoricTaskInstanceQuery()
+            .processDefinitionId(processDefinitionId)
             .list()
             .stream()
             .map(task -> task.getId())
@@ -137,6 +142,7 @@ public class HistoryMigrationListSkippedTest extends HistoryMigrationAbstractTes
 
         // Assert incidents - verify the actual incident IDs from C7
         List<String> expectedIncidentIds = historyService.createHistoricIncidentQuery()
+            .processDefinitionId(processDefinitionId)
             .list()
             .stream()
             .map(incident -> incident.getId())
@@ -147,6 +153,7 @@ public class HistoryMigrationListSkippedTest extends HistoryMigrationAbstractTes
 
         // Assert variables - verify the actual variable IDs from C7
         List<String> expectedVariableIds = historyService.createHistoricVariableInstanceQuery()
+            .processDefinitionId(processDefinitionId)
             .list()
             .stream()
             .map(variable -> variable.getId())
@@ -157,6 +164,7 @@ public class HistoryMigrationListSkippedTest extends HistoryMigrationAbstractTes
 
         // Assert flow nodes - verify the actual flow node (activity instance) IDs from C7
         List<String> expectedFlowNodeIds = historyService.createHistoricActivityInstanceQuery()
+            .processDefinitionId(processDefinitionId)
             .list()
             .stream()
             .map(activity -> activity.getId())
