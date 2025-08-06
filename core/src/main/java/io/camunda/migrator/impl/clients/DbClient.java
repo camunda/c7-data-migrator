@@ -129,12 +129,12 @@ public class DbClient {
   }
 
   /**
-   * Lists skipped process instances with pagination and prints them.
+   * Lists skipped entities by type with pagination and prints them.
    */
-  public void listSkippedRuntimeProcessInstances() {
+  public void listSkippedEntitiesByType(TYPE type) {
     new Pagination<String>().pageSize(properties.getPageSize())
-        .maxCount(() -> idKeyMapper.countSkippedByType(TYPE.RUNTIME_PROCESS_INSTANCE))
-        .page(offset -> idKeyMapper.findSkippedByType(TYPE.RUNTIME_PROCESS_INSTANCE, offset, properties.getPageSize())
+        .maxCount(() -> idKeyMapper.countSkippedByType(type))
+        .page(offset -> idKeyMapper.findSkippedByType(type, offset, properties.getPageSize())
             .stream()
             .map(IdKeyDbModel::id)
             .collect(Collectors.toList()))

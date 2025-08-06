@@ -7,6 +7,8 @@
  */
 package io.camunda.migrator.impl.util;
 
+import static io.camunda.migrator.impl.persistence.IdKeyMapper.TYPE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,12 +16,19 @@ public class PrintUtils {
 
   protected static final Logger PRINTER = LoggerFactory.getLogger("PRINTER");
 
-  public static final String PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE = "Previously skipped process instances:";
-  public static final String NO_SKIPPED_INSTANCES_MESSAGE = "No process instances were skipped during previous migration";
-
-  public static void printSkippedInstancesHeader(long count) {
-    print(count > 0 ? PREVIOUSLY_SKIPPED_INSTANCES_MESSAGE : NO_SKIPPED_INSTANCES_MESSAGE);
+  public static void printSkippedInstancesHeader(long count, TYPE entityType) {
+    String entityName = entityType.getDisplayName();
+    String message = count > 0
+        ? "Previously skipped " + entityName + "s:"
+        : "No " + entityName + "s were skipped during previous migration";
+    print(message);
   }
+
+  // Keep the old method for backward compatibility
+  public static void printSkippedInstancesHeader(long count) {
+    printSkippedInstancesHeader(count, TYPE.RUNTIME_PROCESS_INSTANCE);
+  }
+
 
   public static void print(String message) {
     PRINTER.info(message);

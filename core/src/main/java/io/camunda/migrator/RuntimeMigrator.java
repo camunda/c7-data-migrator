@@ -63,8 +63,9 @@ public class RuntimeMigrator {
   public void start() {
     ExceptionUtils.setContext(ExceptionUtils.ExceptionContext.RUNTIME);
     if (LIST_SKIPPED.equals(mode)) {
-      PrintUtils.printSkippedInstancesHeader(dbClient.countSkippedByType(TYPE.RUNTIME_PROCESS_INSTANCE));
-      dbClient.listSkippedRuntimeProcessInstances();
+      PrintUtils.printSkippedInstancesHeader(dbClient.countSkippedByType(TYPE.RUNTIME_PROCESS_INSTANCE),
+          TYPE.RUNTIME_PROCESS_INSTANCE);
+      dbClient.listSkippedEntitiesByType(TYPE.RUNTIME_PROCESS_INSTANCE);
     } else {
       migrate();
     }

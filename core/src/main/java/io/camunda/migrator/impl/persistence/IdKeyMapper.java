@@ -14,16 +14,26 @@ import org.apache.ibatis.annotations.Param;
 public interface IdKeyMapper {
 
   enum TYPE {
-    HISTORY_PROCESS_DEFINITION,
-    HISTORY_PROCESS_INSTANCE,
-    HISTORY_INCIDENT,
-    HISTORY_VARIABLE,
-    HISTORY_USER_TASK,
-    HISTORY_FLOW_NODE,
-    HISTORY_DECISION_INSTANCE,
-    HISTORY_DECISION_DEFINITION,
+    HISTORY_PROCESS_DEFINITION("historic process definition"),
+    HISTORY_PROCESS_INSTANCE("historic process instance"),
+    HISTORY_INCIDENT("historic incident"),
+    HISTORY_VARIABLE("historic variable"),
+    HISTORY_USER_TASK("historic user task"),
+    HISTORY_FLOW_NODE("historic flow node"),
+    HISTORY_DECISION_INSTANCE("historic decision instance"),
+    HISTORY_DECISION_DEFINITION("historic decision definition"),
 
-    RUNTIME_PROCESS_INSTANCE
+    RUNTIME_PROCESS_INSTANCE("process instance");
+
+    private final String displayName;
+
+    TYPE(String displayName) {
+      this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
   }
 
   String findLatestIdByType(TYPE type);
