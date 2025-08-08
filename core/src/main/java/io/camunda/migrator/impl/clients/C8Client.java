@@ -48,11 +48,15 @@ public class C8Client {
   /**
    * Creates a new process instance with the given BPMN process ID and variables.
    */
-  public ProcessInstanceEvent createProcessInstance(String bpmnProcessId, Map<String, Object> variables) {
+  public ProcessInstanceEvent createProcessInstance(String bpmnProcessId, String tenantId, Map<String, Object> variables) {
     var createProcessInstance = camundaClient.newCreateInstanceCommand()
         .bpmnProcessId(bpmnProcessId)
         .latestVersion()
         .variables(variables);
+
+    if (tenantId != null) {
+      createProcessInstance.tenantId(tenantId);
+    }
 
     return callApi(createProcessInstance::execute, FAILED_TO_CREATE_PROCESS_INSTANCE + bpmnProcessId);
   }
