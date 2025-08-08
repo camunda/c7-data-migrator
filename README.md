@@ -603,12 +603,11 @@ When a process instance is skipped:
     - Camunda 8 supported types: [documentation](https://docs.camunda.io/docs/components/concepts/variables/#variable-values)
     - Camunda 8 variable name restrictions: [documentation](https://docs.camunda.io/docs/next/components/concepts/variables/#variable-values).
       - Variables that do not follow the restrictions will cause issues in FEEL expression evaluation.
-    - A Date variable (2025-06-20T11:32:06.868) is migrated to C8 in `ms` format (1750419126868). [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5244)
-    - Variables are serialized. (to be changed)
     - XML variable is migrated to JSON string variable. [ticket](https://github.com/camunda/camunda-bpm-platform/issues/5246)
       - Spin XML variable is migrated to XML string variable.
     - Variables set into the scope of embedded sub-processes are not supported yet and will be ignored.
       - See https://github.com/camunda/camunda-bpm-platform/issues/5235
+    - Unsupported Camunda 7 types: [documentation](#unsupported-variable-types)
 - Event subprocess:
   - **Important limitation during migration**: Event subprocesses with interrupting start events can cause unexpected behavior during migration if triggered at the wrong moment. This includes timer, message, and signal start events.
   - **What can go wrong**:

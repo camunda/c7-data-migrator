@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration class for managing interceptors from both Spring context and YAML.
+ * Configuration class for managing interceptors from both Spring context and config data files.
  */
 @Configuration
 public class InterceptorConfiguration {
@@ -42,7 +42,7 @@ public class InterceptorConfiguration {
   protected MigratorProperties migratorProperties;
 
   /**
-   * Creates a composite list of variable interceptors from both Spring context and YAML configuration.
+   * Creates a composite list of variable interceptors from both Spring context and config data files.
    *
    * @return List of configured variable interceptors
    */
@@ -54,7 +54,7 @@ public class InterceptorConfiguration {
     List<VariableInterceptor> contextInterceptors = new ArrayList<>(
         context.getBeansOfType(VariableInterceptor.class).values());
 
-    // Add interceptors from YAML configuration
+    // Add interceptors from configuration
     registerYamlInterceptors(contextInterceptors, migratorProperties.getInterceptors());
 
     // Sort by order annotation if present
@@ -65,10 +65,10 @@ public class InterceptorConfiguration {
   }
 
   /**
-   * Creates variable interceptor instances from YAML configuration and adds them to the context interceptors list.
+   * Creates variable interceptor instances from config data files and adds them to the context interceptors list.
    *
    * @param contextInterceptors List of interceptors discovered from Spring context
-   * @param yamlInterceptors List of interceptor configurations from YAML
+   * @param yamlInterceptors List of interceptor configurations from config data files
    */
   public void registerYamlInterceptors(List<VariableInterceptor> contextInterceptors,
                                               List<InterceptorProperty> yamlInterceptors) {

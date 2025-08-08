@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Example variable interceptor that can be packaged as a JAR
- * and configured via YAML without Spring Boot annotations.
+ * and configured via config data file without Spring Boot annotations.
  *
  * This demonstrates:
  * - How to create a standalone interceptor
@@ -62,7 +62,7 @@ public class MyCustomVariableInterceptor implements VariableInterceptor {
         }
     }
 
-    // Setter methods for YAML configuration
+    // Setter methods for config data properties
     public void setEnableLogging(boolean enableLogging) {
         this.enableLogging = enableLogging;
     }

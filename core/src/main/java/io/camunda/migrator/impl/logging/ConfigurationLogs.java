@@ -52,7 +52,7 @@ public class ConfigurationLogs {
   }
 
   /**
-   * Logs when no YAML interceptors are configured.
+   * Logs when no interceptors are configured in config data file.
    */
   public static void logNoYamlInterceptors() {
     LOGGER.debug(DEBUG_NO_YAML_INTERCEPTORS);

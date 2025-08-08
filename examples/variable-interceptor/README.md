@@ -48,7 +48,7 @@ The example `MyCustomVariableInterceptor` demonstrates:
 - **Variable Name Transformation**: Adds a configurable prefix to variable names
 - **Type Conversion**: Converts variable values to strings if configured
 - **Configurable Logging**: Enable/disable detailed logging via configuration
-- **Property Injection**: Shows how YAML properties are automatically injected
+- **Property Injection**: Shows how config properties are automatically injected
 
 ## Creating Your Own Interceptor
 
@@ -63,6 +63,6 @@ The example `MyCustomVariableInterceptor` demonstrates:
 
 - **No `@Component` annotation required**
 - **No Spring Boot dependencies needed**
-- **Configured via YAML instead of component scanning**
+- **Configured via config data file instead of component scanning**
 - **Can be packaged and deployed independently**
-- **Properties injected automatically from YAML configuration**
+- **Properties injected automatically from config data file**

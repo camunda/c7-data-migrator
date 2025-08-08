@@ -10,7 +10,7 @@ package io.camunda.migrator.config.property;
 import java.util.Map;
 
 /**
- * Configuration properties for interceptors that can be loaded from YAML.
+ * Configuration properties for interceptors that can be loaded from config data file.
  */
 public class InterceptorProperty {
 
