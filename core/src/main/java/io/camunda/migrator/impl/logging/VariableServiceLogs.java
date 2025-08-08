@@ -35,20 +35,20 @@ public class VariableServiceLogs {
   public static final String VARIABLE_INTERCEPTOR_FAILED_MSG = "%s failed for variable with name '%s'";
 
   // Error message constants (for exception throwing)
-  public static final String BYTE_ARRAY_UNSUPPORTED_ERROR = "Type 'byte[]' is unsupported in C8.";
-  public static final String FILE_TYPE_UNSUPPORTED_ERROR = "Type 'file' is unsupported in C8.";
+  public static final String BYTE_ARRAY_UNSUPPORTED_ERROR = "Variable of type 'byte[]' is unsupported in C8.";
+  public static final String FILE_TYPE_UNSUPPORTED_ERROR = "Variable of type 'file' is unsupported in C8.";
   public static final String JAVA_SERIALIZED_UNSUPPORTED_ERROR = "Objects serialized as 'application/x-java-serialized-object' are unsupported in C8.";
   public static final String JSON_DESERIALIZATION_ERROR = "Error while deserializing JSON into Map type.";
-  public static final String GENERIC_TYPE_UNSUPPORTED_ERROR = "Type '%s' is unsupported in C8.";
+  public static final String GENERIC_TYPE_UNSUPPORTED_ERROR = "Variable of type '%s' is unsupported in C8.";
 
   /**
-   * Logs an error message for variable interceptor failure.
+   * Logs a warning message for variable interceptor failure.
    *
    * @param interceptorName the name of the failed interceptor
    * @param variableName the name of the variable being processed
    */
-  public static void logInterceptorError(String interceptorName, String variableName) {
-    LOGGER.error(formatInterceptorError(interceptorName, variableName));
+  public static void logInterceptorWarn(String interceptorName, String variableName) {
+    LOGGER.warn(formatInterceptorWarn(interceptorName, variableName));
   }
 
   /**
@@ -58,7 +58,7 @@ public class VariableServiceLogs {
    * @param variableName the variable name
    * @return formatted error message
    */
-  public static String formatInterceptorError(String interceptorName, String variableName) {
+  public static String formatInterceptorWarn(String interceptorName, String variableName) {
     return String.format(VARIABLE_INTERCEPTOR_FAILED_MSG, interceptorName, variableName);
   }
 

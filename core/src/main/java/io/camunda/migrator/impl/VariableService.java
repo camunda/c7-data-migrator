@@ -163,13 +163,13 @@ public class VariableService {
         } catch (Exception ex) {
           String interceptorName = interceptor.getClass().getSimpleName();
           String variableName = variableInvocation.getC7Variable().getName();
-          VariableServiceLogs.logInterceptorError(interceptorName, variableName);
+          VariableServiceLogs.logInterceptorWarn(interceptorName, variableName);
 
           if (ex instanceof VariableInterceptorException) {
             throw ex;
 
           } else {
-            throw new VariableInterceptorException(VariableServiceLogs.formatInterceptorError(interceptorName, variableName), ex);
+            throw new VariableInterceptorException(VariableServiceLogs.formatInterceptorWarn(interceptorName, variableName), ex);
           }
         }
       }
