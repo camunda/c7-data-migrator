@@ -7,16 +7,19 @@
  */
 package io.camunda.migrator.impl.persistence;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import io.camunda.migrator.impl.persistence.IdKeyMapper.TYPE;
 import java.util.Date;
 import java.util.Objects;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class IdKeyDbModel {
 
   protected Long instanceKey;
   protected String id;
   protected TYPE type;
   protected Date startDate;
+  protected String skipReason;
 
   public IdKeyDbModel() {
   }
@@ -42,6 +45,10 @@ public class IdKeyDbModel {
     return startDate;
   }
 
+  public String skipReason() {
+    return skipReason;
+  }
+
   public void setInstanceKey(Long instanceKey) {
     this.instanceKey = instanceKey;
   }
@@ -56,6 +63,10 @@ public class IdKeyDbModel {
 
   public void setStartDate(Date startDate) {
     this.startDate = startDate;
+  }
+
+  public void setSkipReason(String skipReason) {
+    this.skipReason = skipReason;
   }
 
   @Override

@@ -26,6 +26,9 @@ import io.camunda.migrator.impl.Pagination;
 import io.camunda.migrator.impl.logging.DbClientLogs;
 import io.camunda.migrator.impl.persistence.IdKeyDbModel;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
+import io.camunda.migrator.impl.persistence.SkippedVariablesByProcessDefinitionDbModel;
+import io.camunda.migrator.impl.persistence.SkippedVariablesByProcessInstanceDbModel;
+import io.camunda.migrator.impl.persistence.SkippedVariablesBySkipReasonDbModel;
 import io.camunda.migrator.impl.util.PrintUtils;
 import java.util.Date;
 import java.util.List;
@@ -55,10 +58,24 @@ public class DbClient {
   }
 
   /**
+   * Checks if an entity exists in the mapping table by type and ID.
+   */
+  public boolean checkExistsByTypeAndId(TYPE type, String legacyEntityId) {
+    return callApi(() -> idKeyMapper.checkExistsByTypeAndId(type, legacyEntityId), FAILED_TO_CHECK_EXISTENCE + legacyEntityId);
+  }
+
+  /**
    * Checks if a process instance exists in the mapping table.
    */
   public boolean checkHasKey(String legacyId) {
     return callApi(() -> idKeyMapper.checkHasKey(legacyId), FAILED_TO_CHECK_KEY + legacyId);
+  }
+
+  /**
+   * Checks if an entity has a key in the mapping table by type and ID.
+   */
+  public boolean checkHasKeyByTypeAndId(TYPE type, String legacyId) {
+    return callApi(() -> idKeyMapper.checkHasKeyByTypeAndId(type, legacyId), FAILED_TO_CHECK_KEY + legacyId);
   }
 
   /**
@@ -114,7 +131,7 @@ public class DbClient {
    * Inserts a new process instance record into the mapping table.
    */
   public void insert(String legacyId, Date startDate, Long entityKey, TYPE type) {
-    DbClientLogs.insertingRecord(legacyId, startDate, entityKey);
+    DbClientLogs.insertingRecord(legacyId, startDate, entityKey, null);
     var model = createIdKeyDbModel(legacyId, startDate, entityKey, type);
     callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyId);
   }
@@ -123,8 +140,17 @@ public class DbClient {
    * Inserts a new record into the mapping table.
    */
   public void insert(String legacyId, Long key, TYPE type) {
-    DbClientLogs.insertingRecord(legacyId, null, key);
+    DbClientLogs.insertingRecord(legacyId, null, key, null);
     var model = createIdKeyDbModel(legacyId, null, key, type);
+    callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyId);
+  }
+
+  /**
+   * Inserts a new process instance record into the mapping table.
+   */
+  public void insert(String legacyId, Date startDate, TYPE type, String skipReason) {
+    DbClientLogs.insertingRecord(legacyId, startDate, null, skipReason);
+    var model = createIdKeyDbModel(legacyId, startDate, null, type, skipReason);
     callApi(() -> idKeyMapper.insert(model), FAILED_TO_INSERT_RECORD + legacyId);
   }
 
@@ -168,6 +194,30 @@ public class DbClient {
   }
 
   /**
+   * Finds skipped historic variables grouped by process instance ID.
+   */
+  public List<SkippedVariablesByProcessInstanceDbModel> findSkippedVariablesByProcessInstance(int offset, int limit) {
+    return callApi(() -> idKeyMapper.findSkippedVariablesByProcessInstance(offset, limit),
+        "Failed to find skipped variables by process instance");
+  }
+
+  /**
+   * Finds skipped historic variables grouped by process definition ID.
+   */
+  public List<SkippedVariablesByProcessDefinitionDbModel> findSkippedVariablesByProcessDefinition(int offset, int limit) {
+    return callApi(() -> idKeyMapper.findSkippedVariablesByProcessDefinition(offset, limit),
+        "Failed to find skipped variables by process definition");
+  }
+
+  /**
+   * Finds skipped historic variables grouped by skip reason.
+   */
+  public List<SkippedVariablesBySkipReasonDbModel> findSkippedVariablesBySkipReason(int offset, int limit) {
+    return callApi(() -> idKeyMapper.findSkippedVariablesBySkipReason(offset, limit),
+        "Failed to find skipped variables by skip reason");
+  }
+
+  /**
    * Deletes all mappings from the database.
    */
   public void deleteAllMappings() {
@@ -182,15 +232,23 @@ public class DbClient {
   }
 
   /**
-   * Creates a new IdKeyDbModel instance with the provided parameters.
+   * Creates a new IdKeyDbModel instance with the provided parameters including skip reason.
    */
-  protected IdKeyDbModel createIdKeyDbModel(String id, Date startDate, Long key, TYPE type) {
+  protected IdKeyDbModel createIdKeyDbModel(String id, Date startDate, Long key, TYPE type, String skipReason) {
     var keyIdDbModel = new IdKeyDbModel();
     keyIdDbModel.setId(id);
     keyIdDbModel.setStartDate(startDate);
     keyIdDbModel.setInstanceKey(key);
     keyIdDbModel.setType(type);
+    keyIdDbModel.setSkipReason(skipReason);
     return keyIdDbModel;
+  }
+
+  /**
+   * Creates a new IdKeyDbModel instance with the provided parameters.
+   */
+  protected IdKeyDbModel createIdKeyDbModel(String id, Date startDate, Long key, TYPE type) {
+    return createIdKeyDbModel(id, startDate, key, type, null);
   }
 
 }

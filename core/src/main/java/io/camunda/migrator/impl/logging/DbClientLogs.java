@@ -46,6 +46,10 @@ public class DbClientLogs {
     LOGGER.debug(INSERTING_RECORD, legacyProcessInstanceId, startDate, processInstanceKey);
   }
 
+  public static void insertingRecord(String legacyProcessInstanceId, Object startDate, Long processInstanceKey, String skipReason) {
+    LOGGER.debug(INSERTING_RECORD, legacyProcessInstanceId, startDate, processInstanceKey, skipReason);
+  }
+
   public static void foundLatestStartDate(Date latestStartDate, IdKeyMapper.TYPE type) {
     LOGGER.debug(FOUND_START_DATE_FOR_TYPE, type, latestStartDate);
   }

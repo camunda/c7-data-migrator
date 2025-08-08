@@ -30,7 +30,11 @@ public interface IdKeyMapper {
 
   boolean checkExists(String id);
 
+  boolean checkExistsByTypeAndId(@Param("type") TYPE type, @Param("id") String id);
+
   boolean checkHasKey(String id);
+
+  boolean checkHasKeyByTypeAndId(@Param("type") TYPE type, @Param("id") String id);
 
   Date findLatestStartDateByType(TYPE type);
 
@@ -45,6 +49,12 @@ public interface IdKeyMapper {
   long countSkippedByType(@Param("type") TYPE type);
 
   List<String> findAllIds();
+
+  List<SkippedVariablesByProcessInstanceDbModel> findSkippedVariablesByProcessInstance(@Param("offset") int offset, @Param("limit") int limit);
+
+  List<SkippedVariablesByProcessDefinitionDbModel> findSkippedVariablesByProcessDefinition(@Param("offset") int offset, @Param("limit") int limit);
+
+  List<SkippedVariablesBySkipReasonDbModel> findSkippedVariablesBySkipReason(@Param("offset") int offset, @Param("limit") int limit);
 
   void updateKeyById(IdKeyDbModel idKeyDbModel);
 

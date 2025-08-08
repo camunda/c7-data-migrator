@@ -55,6 +55,7 @@
       </activation>
       <modules>
         <module>core</module>
+        <module>plugins/cockpit</module>
         <module>examples</module>
         <module>qa</module>
         <module>distro</module>
