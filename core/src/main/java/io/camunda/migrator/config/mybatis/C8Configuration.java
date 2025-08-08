@@ -360,7 +360,8 @@ public class C8Configuration extends AbstractConfiguration {
       JobMapper jobMapper,
       SequenceFlowMapper sequenceFlowMapper,
       UsageMetricMapper usageMetricMapper,
-      UsageMetricTUMapper usageMetricTUMapper) {
+      UsageMetricTUMapper usageMetricTUMapper,
+      BatchOperationMapper batchOperationMapper) {
     return new RdbmsWriterFactory(
         c8SqlSessionFactory,
         exporterPositionMapper,
@@ -377,7 +378,8 @@ public class C8Configuration extends AbstractConfiguration {
         jobMapper,
         sequenceFlowMapper,
         usageMetricMapper,
-        usageMetricTUMapper);
+        usageMetricTUMapper,
+        batchOperationMapper);
   }
 
   @Bean
