@@ -7,6 +7,11 @@
  */
 package io.camunda.migrator.qa.history;
 
+import static io.camunda.migrator.qa.util.FilterFactory.incFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procDefFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procInstFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.userTasksFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.varFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.MigratorMode;
@@ -40,7 +45,7 @@ public class HistoryMigrationRetryTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process definition is migrated and no longer skipped
-        assertThat(searchHistoricProcessDefinitions("userTaskProcessId").size()).isEqualTo(1);
+        assertThat(searchHistoricProcessDefinitions(procDefFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(1);
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_PROCESS_DEFINITION)).isEqualTo(0);
     }
 
@@ -74,12 +79,12 @@ public class HistoryMigrationRetryTest extends HistoryMigrationAbstractTest {
     historyMigrator.migrate();
 
     // then only previously skipped entities are migrated
-    assertThat(searchHistoricProcessDefinitions("allElementsProcessId").size()).isEqualTo(1);
-    List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances("allElementsProcessId");
+    assertThat(searchHistoricProcessDefinitions(procDefFilter().processDefinitionIds("allElementsProcessId")).size()).isEqualTo(1);
+    List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("allElementsProcessId"));
     assertThat(processInstances.size()).isEqualTo(1);
-    assertThat(searchHistoricUserTasks(processInstances.getFirst().processInstanceKey()).size()).isEqualTo(1);
-    assertThat(searchHistoricIncidents("allElementsProcessId").size()).isEqualTo(1);
-    assertThat(searchHistoricVariables("userTaskVar").size()).isEqualTo(1);
+    assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(processInstances.getFirst().processInstanceKey())).size()).isEqualTo(1);
+    assertThat(searchHistoricIncidents(incFilter().processDefinitionIds("allElementsProcessId")).size()).isEqualTo(1);
+    assertThat(searchHistoricVariables(varFilter().names("userTaskVar")).size()).isEqualTo(1);
 
     // and nothing marked as skipped
     assertThat(dbClient.checkHasKey(procDefId)).isTrue();
@@ -112,8 +117,8 @@ public class HistoryMigrationRetryTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then only non skipped entities are migrated
-        assertThat(searchHistoricProcessDefinitions("userTaskProcessId").size()).isEqualTo(1);
-        List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances("userTaskProcessId");
+        assertThat(searchHistoricProcessDefinitions(procDefFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(1);
+        List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
         assertThat(processInstances.size()).isEqualTo(4);
 
         // and skipped entities are still skipped

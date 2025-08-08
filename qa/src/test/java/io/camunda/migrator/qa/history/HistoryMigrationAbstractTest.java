@@ -26,6 +26,12 @@ import io.camunda.search.entities.ProcessDefinitionEntity;
 import io.camunda.search.entities.ProcessInstanceEntity;
 import io.camunda.search.entities.UserTaskEntity;
 import io.camunda.search.entities.VariableEntity;
+import io.camunda.search.filter.FlowNodeInstanceFilter;
+import io.camunda.search.filter.IncidentFilter;
+import io.camunda.search.filter.ProcessDefinitionFilter;
+import io.camunda.search.filter.ProcessInstanceFilter;
+import io.camunda.search.filter.UserTaskFilter;
+import io.camunda.search.filter.VariableFilter;
 import io.camunda.search.query.FlowNodeInstanceQuery;
 import io.camunda.search.query.IncidentQuery;
 import io.camunda.search.query.ProcessDefinitionQuery;
@@ -78,51 +84,45 @@ public abstract class HistoryMigrationAbstractTest extends AbstractMigratorTest 
     rdbmsPurger.purgeRdbms();
   }
 
-  public List<ProcessDefinitionEntity> searchHistoricProcessDefinitions(String processDefinitionId) {
+  public List<ProcessDefinitionEntity> searchHistoricProcessDefinitions(ProcessDefinitionFilter.Builder filter) {
     return rdbmsService.getProcessDefinitionReader()
         .search(ProcessDefinitionQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.processDefinitionIds(processDefinitionId))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 
-  public List<ProcessInstanceEntity> searchHistoricProcessInstances(String processDefinitionId) {
+  public List<ProcessInstanceEntity> searchHistoricProcessInstances(ProcessInstanceFilter.Builder filter) {
     return rdbmsService.getProcessInstanceReader()
         .search(ProcessInstanceQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.processDefinitionIds(processDefinitionId))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 
-  public List<UserTaskEntity> searchHistoricUserTasks(long processInstanceKey) {
+  public List<UserTaskEntity> searchHistoricUserTasks(UserTaskFilter.Builder filter) {
     return rdbmsService.getUserTaskReader()
         .search(UserTaskQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.processInstanceKeys(processInstanceKey))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 
-  public List<FlowNodeInstanceEntity> searchHistoricFlowNodesForType(long processInstanceKey, FlowNodeInstanceEntity.FlowNodeType type) {
+  public List<FlowNodeInstanceEntity> searchHistoricFlowNodes(FlowNodeInstanceFilter.Builder filter) {
     return rdbmsService.getFlowNodeInstanceReader()
         .search(FlowNodeInstanceQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.processInstanceKeys(processInstanceKey).types(type))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 
-  public List<IncidentEntity> searchHistoricIncidents(String processDefinitionId) {
+  public List<IncidentEntity> searchHistoricIncidents(IncidentFilter.Builder filter) {
     return rdbmsService.getIncidentReader()
         .search(IncidentQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.processDefinitionIds(processDefinitionId))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 
-  public List<VariableEntity> searchHistoricVariables(String varName) {
+  public List<VariableEntity> searchHistoricVariables(VariableFilter.Builder filter) {
     return rdbmsService.getVariableReader()
         .search(VariableQuery.of(queryBuilder ->
-            queryBuilder.filter(filterBuilder ->
-                filterBuilder.names(varName))))
+            queryBuilder.filter(filterBuilder -> filter)))
         .items();
   }
 

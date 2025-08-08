@@ -7,6 +7,11 @@
  */
 package io.camunda.migrator.qa.history;
 
+import static io.camunda.migrator.qa.util.FilterFactory.flowNodesFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.incFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procDefFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procInstFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.userTasksFilter;
 import static io.camunda.search.entities.FlowNodeInstanceEntity.FlowNodeType.INTERMEDIATE_CATCH_EVENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,8 +38,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
   public void shouldMigrateProcessDefinitionsDeployedBetweenRuns() {
     // given
     deployer.deployCamunda7Process("simpleStartEndProcess.bpmn");
-    Supplier<List<ProcessDefinitionEntity>> definitionSupplier = () -> searchHistoricProcessDefinitions(
-        "simpleStartEndProcessId");
+    Supplier<List<ProcessDefinitionEntity>> definitionSupplier = () -> searchHistoricProcessDefinitions(procDefFilter().processDefinitionIds("simpleStartEndProcessId"));
 
     // when
     historyMigrator.migrate();
@@ -65,7 +69,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     historyMigrator.migrate();
 
     // then
-    assertThat(searchHistoricProcessDefinitions("simpleStartEndProcessId")).hasSize(3);
+    assertThat(searchHistoricProcessDefinitions(procDefFilter().processDefinitionIds("simpleStartEndProcessId"))).hasSize(3);
   }
 
   @Test
@@ -73,8 +77,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     // given
     deployer.deployCamunda7Process("simpleStartEndProcess.bpmn");
     runtimeService.startProcessInstanceByKey("simpleStartEndProcessId");
-    Supplier<List<ProcessInstanceEntity>> instanceSupplier = () -> searchHistoricProcessInstances(
-        "simpleStartEndProcessId");
+    Supplier<List<ProcessInstanceEntity>> instanceSupplier = () -> searchHistoricProcessInstances(procInstFilter().processDefinitionIds("simpleStartEndProcessId"));
 
     // when
     historyMigrator.migrate();
@@ -109,7 +112,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     historyMigrator.migrate();
 
     // then
-    assertThat(searchHistoricProcessInstances("simpleStartEndProcessId")).hasSize(4);
+    assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("simpleStartEndProcessId"))).hasSize(4);
   }
 
   @Test
@@ -118,7 +121,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     deployer.deployCamunda7Process("userTaskProcess.bpmn");
     runtimeService.startProcessInstanceByKey("userTaskProcessId");
     completeAllUserTasksWithDefaultUserTaskId();
-    Supplier<List<ProcessInstanceEntity>> instanceSupplier = () -> searchHistoricProcessInstances("userTaskProcessId");
+    Supplier<List<ProcessInstanceEntity>> instanceSupplier = () -> searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
 
     // when
     historyMigrator.migrate();
@@ -126,7 +129,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     // then
     assertThat(instanceSupplier.get()).singleElement()
         .extracting(ProcessInstanceEntity::processInstanceKey)
-        .satisfies(instanceKey -> assertThat(searchHistoricUserTasks(instanceKey)).singleElement());
+        .satisfies(instanceKey -> assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(instanceKey))).singleElement());
 
     // given
     runtimeService.startProcessInstanceByKey("userTaskProcessId");
@@ -138,7 +141,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     // then
     assertThat(instanceSupplier.get()).hasSize(2)
         .extracting(ProcessInstanceEntity::processInstanceKey)
-        .allSatisfy(instanceKey -> assertThat(searchHistoricUserTasks(instanceKey)).singleElement());
+        .allSatisfy(instanceKey -> assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(instanceKey))).singleElement());
   }
 
   @Test
@@ -159,9 +162,9 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     historyMigrator.migrate();
 
     // then
-    assertThat(searchHistoricProcessInstances("userTaskProcessId")).hasSize(3)
+    assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"))).hasSize(3)
         .extracting(ProcessInstanceEntity::processInstanceKey)
-        .allSatisfy(instanceKey -> assertThat(searchHistoricUserTasks(instanceKey)).singleElement());
+        .allSatisfy(instanceKey -> assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(instanceKey))).singleElement());
   }
 
   @Test
@@ -170,10 +173,8 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     deployer.deployCamunda7Process("multipleSignalProcess.bpmn");
     runtimeService.startProcessInstanceByKey("multipleSignalProcessId");
     runtimeService.signalEventReceived("signalRef1");
-    Supplier<List<ProcessInstanceEntity>> proceInstSupplier = () -> searchHistoricProcessInstances(
-        "multipleSignalProcessId");
-    Function<Long, List<FlowNodeInstanceEntity>> flownodeSupplier = procInstanceKey -> searchHistoricFlowNodesForType(
-        procInstanceKey, INTERMEDIATE_CATCH_EVENT);
+    Supplier<List<ProcessInstanceEntity>> proceInstSupplier = () -> searchHistoricProcessInstances(procInstFilter().processDefinitionIds("multipleSignalProcessId"));
+    Function<Long, List<FlowNodeInstanceEntity>> flownodeSupplier = procInstanceKey -> searchHistoricFlowNodes(flowNodesFilter().processInstanceKeys(procInstanceKey).types(INTERMEDIATE_CATCH_EVENT));
 
     // when
     historyMigrator.migrate();
@@ -214,9 +215,9 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     historyMigrator.migrate();
 
     // then
-    List<ProcessInstanceEntity> instance = searchHistoricProcessInstances("multipleSignalProcessId");
+    List<ProcessInstanceEntity> instance = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("multipleSignalProcessId"));
     assertThat(instance).singleElement();
-    assertThat(searchHistoricFlowNodesForType(instance.get(0).processInstanceKey(), INTERMEDIATE_CATCH_EVENT)).hasSize(
+    assertThat(searchHistoricFlowNodes(flowNodesFilter().processInstanceKeys(instance.getFirst().processInstanceKey()).types(INTERMEDIATE_CATCH_EVENT))).hasSize(
             3)
         .extracting(FlowNodeInstanceEntity::flowNodeId)
         .containsExactlyInAnyOrder("signal1Id", "signal2Id", "signal3Id");
@@ -228,7 +229,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     deployer.deployCamunda7Process("incidentProcess.bpmn");
     String instanceId = runtimeService.startProcessInstanceByKey("incidentProcessId").getProcessInstanceId();
     triggerIncident(instanceId);
-    Supplier<List<IncidentEntity>> incidentSupplier = () -> searchHistoricIncidents("incidentProcessId");
+    Supplier<List<IncidentEntity>> incidentSupplier = () -> searchHistoricIncidents(incFilter().processDefinitionIds("incidentProcessId"));
 
     // when
     historyMigrator.migrate();
@@ -262,7 +263,7 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
     historyMigrator.migrate();
 
     // then
-    assertThat(searchHistoricIncidents("incidentProcessId")).hasSize(2);
+    assertThat(searchHistoricIncidents(incFilter().processDefinitionIds("incidentProcessId"))).hasSize(2);
   }
 
   private void triggerIncident(final String processInstanceId) {

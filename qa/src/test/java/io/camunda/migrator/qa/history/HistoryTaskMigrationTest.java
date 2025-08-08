@@ -7,6 +7,9 @@
  */
 package io.camunda.migrator.qa.history;
 
+import static io.camunda.migrator.qa.util.FilterFactory.flowNodesFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procInstFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.userTasksFilter;
 import static io.camunda.search.entities.FlowNodeInstanceEntity.FlowNodeType.END_EVENT;
 import static io.camunda.search.entities.FlowNodeInstanceEntity.FlowNodeType.START_EVENT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,17 +35,17 @@ public class HistoryTaskMigrationTest extends HistoryMigrationAbstractTest {
     historyMigrator.migrate();
 
     // then expected number of historic process instances
-    List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances("userTaskProcessId");
+    List<ProcessInstanceEntity> processInstances = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
     assertThat(processInstances.size()).isEqualTo(5);
     for (ProcessInstanceEntity processInstance : processInstances) {
       // and process instance has expected state
       assertThat(processInstance.state()).isEqualTo(ProcessInstanceEntity.ProcessInstanceState.COMPLETED);
       Long processInstanceKey = processInstance.processInstanceKey();
-      List<UserTaskEntity> userTasks = searchHistoricUserTasks(processInstanceKey);
+      List<UserTaskEntity> userTasks = searchHistoricUserTasks(userTasksFilter().processInstanceKeys(processInstanceKey));
       assertThat(userTasks.size()).isEqualTo(1);
       assertThat(userTasks.getFirst().state()).isEqualTo(UserTaskEntity.UserTaskState.COMPLETED);
-      assertThat(searchHistoricFlowNodesForType(processInstanceKey, START_EVENT)).size().isEqualTo(1);
-      assertThat(searchHistoricFlowNodesForType(processInstanceKey, END_EVENT)).size().isEqualTo(1);
+      assertThat(searchHistoricFlowNodes(flowNodesFilter().processInstanceKeys(processInstanceKey).types(START_EVENT))).size().isEqualTo(1);
+      assertThat(searchHistoricFlowNodes(flowNodesFilter().processInstanceKeys(processInstanceKey).types(END_EVENT))).size().isEqualTo(1);
     }
   }
 }

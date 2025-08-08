@@ -7,11 +7,12 @@
  */
 package io.camunda.migrator.qa.history;
 
+import static io.camunda.migrator.qa.util.FilterFactory.incFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.procInstFilter;
+import static io.camunda.migrator.qa.util.FilterFactory.userTasksFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.camunda.migrator.HistoryMigrator;
-import io.camunda.migrator.MigratorMode;
-import io.camunda.migrator.impl.clients.DbClient;
 import io.camunda.migrator.impl.persistence.IdKeyMapper;
 import io.camunda.search.entities.ProcessInstanceEntity;
 import io.github.netmikey.logunit.api.LogCapturer;
@@ -60,7 +61,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then nothing was migrated
-        assertThat(searchHistoricProcessInstances("userTaskProcessId").size()).isEqualTo(0);
+        assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(0);
 
         // and all elements for the definition were skipped
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE)).isEqualTo(5);
@@ -81,7 +82,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then no process instances were migrated
-        assertThat(searchHistoricProcessInstances("userTaskProcessId").size()).isEqualTo(0);
+        assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(0);
 
         // verify the process instance was skipped exactly once
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_PROCESS_INSTANCE)).isEqualTo(1);
@@ -105,7 +106,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance and user task were skipped
-        assertThat(searchHistoricProcessInstances("userTaskProcessId").size()).isEqualTo(0);
+        assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(0);
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_USER_TASK)).isEqualTo(1);
         logs.assertContains("Migration of historic user task with legacyId [" + task.getId() + "] skipped");
     }
@@ -126,10 +127,10 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but user task was not
-        var historicProcesses = searchHistoricProcessInstances("userTaskProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
         var processInstance = historicProcesses.getFirst();
-        assertThat(searchHistoricUserTasks(processInstance.processInstanceKey())).isEmpty();
+        assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(processInstance.processInstanceKey()))).isEmpty();
 
         // verify the task was skipped exactly once
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_USER_TASK)).isEqualTo(1);
@@ -167,7 +168,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance and incidents were skipped
-        assertThat(searchHistoricProcessInstances("failingServiceTaskProcessId").size()).isEqualTo(0);
+        assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("failingServiceTaskProcessId")).size()).isEqualTo(0);
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_INCIDENT)).isEqualTo(1);
         logs.assertContains("Migration of historic incident with legacyId [" + incidentId + "] skipped");
     }
@@ -199,10 +200,10 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but incident was not
-        var historicProcesses = searchHistoricProcessInstances("failingServiceTaskProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("failingServiceTaskProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
         ProcessInstanceEntity c8ProcessInstance = historicProcesses.getFirst();
-        assertThat(searchHistoricIncidents(c8ProcessInstance.processDefinitionId())).isEmpty();
+        assertThat(searchHistoricIncidents(incFilter().processDefinitionIds(c8ProcessInstance.processDefinitionId()))).isEmpty();
 
         // verify the incident was skipped exactly once
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_INCIDENT)).isEqualTo(1);
@@ -236,10 +237,10 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but incident was skipped due to skipped job
-        var historicProcesses = searchHistoricProcessInstances("failingServiceTaskProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("failingServiceTaskProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
         ProcessInstanceEntity c8processInstance = historicProcesses.getFirst();
-        assertThat(searchHistoricIncidents(c8processInstance.processDefinitionId())).isEmpty();
+        assertThat(searchHistoricIncidents(incFilter().processDefinitionIds(c8processInstance.processDefinitionId()))).isEmpty();
 
         // verify the incident was skipped
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_INCIDENT)).isEqualTo(1);
@@ -261,7 +262,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance and variables were skipped
-        assertThat(searchHistoricProcessInstances("userTaskProcessId").size()).isEqualTo(0);
+        assertThat(searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId")).size()).isEqualTo(0);
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_VARIABLE)).isEqualTo(1);
     }
 
@@ -286,7 +287,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but the variable was not
-        var historicProcesses = searchHistoricProcessInstances("userTaskProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
 
         // verify the variable was skipped exactly once
@@ -316,12 +317,12 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but task and its variables were not
-        var historicProcesses = searchHistoricProcessInstances("userTaskProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("userTaskProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
         var migratedProcessInstance = historicProcesses.getFirst();
 
         // Verify task was skipped
-        assertThat(searchHistoricUserTasks(migratedProcessInstance.processInstanceKey())).isEmpty();
+        assertThat(searchHistoricUserTasks(userTasksFilter().processInstanceKeys(migratedProcessInstance.processInstanceKey()))).isEmpty();
 
         // Verify task variable was also skipped
         assertThat(dbClient.countSkippedByType(IdKeyMapper.TYPE.HISTORY_VARIABLE)).isEqualTo(1);
@@ -368,7 +369,7 @@ public class HistoryMigrationSkippingTest extends HistoryMigrationAbstractTest {
         historyMigrator.migrate();
 
         // then process instance was migrated but service task was skipped
-        var historicProcesses = searchHistoricProcessInstances("serviceTaskWithInputMappingProcessId");
+        var historicProcesses = searchHistoricProcessInstances(procInstFilter().processDefinitionIds("serviceTaskWithInputMappingProcessId"));
         assertThat(historicProcesses.size()).isEqualTo(1);
 
         // Verify service task variable was skipped
