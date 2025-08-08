@@ -25,12 +25,14 @@ public class HistoryMigratorLogs {
   public static final String MIGRATING_DEFINITION = "Migrating {} definition with legacyId: [{}]";
   public static final String MIGRATING_DEFINITION_COMPLETE = "Migration of {} definition with legacyId [{}] completed";
 
+  public static final String SKIPPING_DECISION_DEFINITION = "Migration of historic decision definition with legacyId [{}] skipped. Decision requirements definition not yet available.";
+
   public static final String MIGRATING_INSTANCES = "Migrating historic {} instances";
   public static final String MIGRATING_INSTANCE = "Migrating historic {} instance with legacyId: [{}]";
   public static final String MIGRATING_INSTANCE_COMPLETE = "Migration of historic {} instance with legacyId "
       + "[{}] completed";
   public static final String SKIPPING_INSTANCE_MISSING_PARENT = "Migration of historic {} instance with legacyId [{}] skipped. Parent instance not yet available.";
-  public static final String SKIPPING_INSTANCE_MISSING_DEFINITION = "Migration of historic {} instance with legacyId [{}] skipped. Process definition not yet available.";
+  public static final String SKIPPING_INSTANCE_MISSING_DEFINITION = "Migration of historic {} instance with legacyId [{}] skipped. {} definition not yet available.";
 
   public static final String MIGRATING_INCIDENTS = "Migrating historic incidents";
   public static final String MIGRATING_INCIDENT = "Migrating historic incident with legacyId: [{}]";
@@ -57,6 +59,10 @@ public class HistoryMigratorLogs {
   public static final String MIGRATING_FLOW_NODE_COMPLETED = "Migration of historic flow nodes with legacyId [{}] completed.";
   public static final String SKIPPING_FLOW_NODE = "Migration of historic flow nodes with legacyId [{}] skipped. Process instance yet not available.";
 
+  public static final String MIGRATING_DECISION_REQUIREMENTS = "Migrating decision requirements";
+  public static final String MIGRATING_DECISION_REQUIREMENT = "Migrating decision requirements with legacyId: [{}]";
+  public static final String MIGRATING_DECISION_REQUIREMENT_COMPLETED = "Migration of decision requirements with legacyId [{}] completed.";
+
   public static void migratingDecisionDefinitions() {
     LOGGER.info(MIGRATING_DEFINITIONS, "decision");
   }
@@ -67,6 +73,10 @@ public class HistoryMigratorLogs {
 
   public static void migratingDecisionDefinitionCompleted(String legacyDecisionDefinitionId) {
     LOGGER.debug(MIGRATING_DEFINITION_COMPLETE, "decision", legacyDecisionDefinitionId);
+  }
+
+  public static void skippingDecisionDefinition(String legacyDecisionDefinitionId) {
+    LOGGER.debug(SKIPPING_DECISION_DEFINITION, legacyDecisionDefinitionId);
   }
 
   public static void migratingProcessDefinitions() {
@@ -98,7 +108,7 @@ public class HistoryMigratorLogs {
   }
 
   public static void skippingProcessInstanceDueToMissingDefinition(String legacyProcessInstanceId) {
-    LOGGER.debug(SKIPPING_INSTANCE_MISSING_DEFINITION, "process", legacyProcessInstanceId);
+    LOGGER.debug(SKIPPING_INSTANCE_MISSING_DEFINITION, "process", legacyProcessInstanceId, "process");
   }
 
   public static void migratingHistoricIncidents() {
@@ -179,5 +189,17 @@ public class HistoryMigratorLogs {
 
   public static void skippingHistoricFlowNode(String legacyFlowNodeId) {
     LOGGER.debug(SKIPPING_FLOW_NODE, legacyFlowNodeId);
+  }
+
+  public static void migratingDecisionRequirements() {
+    LOGGER.info(MIGRATING_DECISION_REQUIREMENTS);
+  }
+
+  public static void migratingDecisionRequirements(String legacyDecisionRequirementsId) {
+    LOGGER.debug(MIGRATING_DECISION_REQUIREMENT, legacyDecisionRequirementsId);
+  }
+
+  public static void migratingDecisionRequirementsCompleted(String legacyDecisionRequirementsId) {
+    LOGGER.debug(MIGRATING_DECISION_REQUIREMENT_COMPLETED, legacyDecisionRequirementsId);
   }
 }

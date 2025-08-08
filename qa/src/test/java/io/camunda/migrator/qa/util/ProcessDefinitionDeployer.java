@@ -66,6 +66,13 @@ public class ProcessDefinitionDeployer {
     checkC8ProcessDefinitionAvailable("io/camunda/migrator/bpmn/c8/" + fileName);
   }
 
+  public void deployCamunda7Decision(String fileName) {
+    Deployment deployment = repositoryService.createDeployment().addClasspathResource("io/camunda/migrator/dmn/c7/" + fileName).deploy();
+    if (deployment == null) {
+      throw new IllegalStateException("Could not deploy decision");
+    }
+  }
+
   private void checkC8ProcessDefinitionAvailable(String resourcePath) {
     Awaitility.await().ignoreException(ClientException.class).untilAsserted(() -> {
       List<ProcessDefinition> items = camundaClient.newProcessDefinitionSearchRequest()

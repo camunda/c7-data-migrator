@@ -10,6 +10,7 @@ package io.camunda.migrator.qa.history;
 import static io.camunda.search.entities.FlowNodeInstanceEntity.FlowNodeType.INTERMEDIATE_CATCH_EVENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.camunda.search.entities.DecisionDefinitionEntity;
 import io.camunda.search.entities.FlowNodeInstanceEntity;
 import io.camunda.search.entities.IncidentEntity;
 import io.camunda.search.entities.ProcessDefinitionEntity;
@@ -66,6 +67,44 @@ public class HistoryMigrationOrderedByStartDateTest extends HistoryMigrationAbst
 
     // then
     assertThat(searchHistoricProcessDefinitions("simpleStartEndProcessId")).hasSize(3);
+  }
+
+  @Test
+  public void shouldMigrateDecisionDefinitionsDeployedBetweenRuns() {
+    // given
+    deployer.deployCamunda7Decision("simpleDmn.dmn");
+    Supplier<List<DecisionDefinitionEntity>> definitionSupplier = () -> searchHistoricDecisionDefinitions("simpleDecisionId");
+
+    // when
+    historyMigrator.migrate();
+
+    // then
+    assertThat(definitionSupplier.get()).singleElement();
+
+    // given
+    deployer.deployCamunda7Decision("simpleDmn.dmn");
+
+    // when
+    historyMigrator.migrate();
+
+    // then
+    assertThat(definitionSupplier.get()).hasSize(2);
+  }
+
+  @Test
+  public void shouldMigrateDecisionDefinitionsWithSameDeploymentDate() {
+    // given
+    deployer.deployCamunda7Decision("simpleDmn.dmn");
+    ClockUtil.setCurrentTime(new Date());
+    deployer.deployCamunda7Decision("simpleDmn.dmn");
+    ClockUtil.offset(1_000 * 4L);
+    deployer.deployCamunda7Decision("simpleDmn.dmn");
+
+    // when
+    historyMigrator.migrate();
+
+    // then
+    assertThat(searchHistoricDecisionDefinitions("simpleDecisionId")).hasSize(3);
   }
 
   @Test
